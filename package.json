@@ -1,0 +1,24 @@
+{
+  "name": "veya",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Veya - Digital business card SaaS monorepo",
+  "scripts": {
+    "dev": "pnpm --filter @veya/backend start:dev",
+    "dev:app": "pnpm --filter @veya/app start",
+    "dev:backend": "pnpm --filter @veya/backend start:dev",
+    "build": "pnpm --filter @veya/shared build && pnpm --filter @veya/backend build",
+    "lint": "pnpm -r --parallel lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "pnpm -r --parallel typecheck"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "eslint": "^9.21.0",
+    "prettier": "^3.5.2",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "pnpm@11.25.0"
+}
