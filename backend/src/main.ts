@@ -4,9 +4,15 @@ import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
+import { json, urlencoded } from 'express';
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
+
+  // Increase payload limits for image uploads
+  app.use(json({ limit: '10mb' }));
+  app.use(urlencoded({ extended: true, limit: '10mb' }));
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 3000;
@@ -65,8 +71,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(port);
-  logger.log(`Server running at http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  logger.log(`Server running at http://localhost:${port} and on local network http://192.168.1.10:${port}`);
   logger.log(`API documentation available at http://localhost:${port}/api/docs`);
   logger.log(`Health check at http://localhost:${port}/api/v1/health`);
 }

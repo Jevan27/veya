@@ -2,7 +2,7 @@
   "name": "@veya/app",
   "version": "0.1.0",
   "private": true,
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -12,14 +12,22 @@
     "lint": "eslint \"**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
     "@veya/shared": "workspace:*",
     "expo": "~57.0.19",
+    "expo-constants": "~57.0.17",
+    "expo-image-picker": "^57.0.15",
+    "expo-linking": "~57.0.9",
+    "expo-router": "~57.0.18",
+    "expo-secure-store": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
-    "react-native": "0.86.3"
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "5.7.0",
+    "react-native-screens": "~4.26.2"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "typescript": "~5.7.3"
+    "typescript": "~6.0.3"
   }
 }

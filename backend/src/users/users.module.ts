@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { UsersController } from './users.controller';
+import { StorageModule } from '../storage/storage.module';
 
-/**
- * Users Module
- * Prepared for User profile and identity management.
- */
 @Module({
-  imports: [],
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [StorageModule],
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
 })
 export class UsersModule {}
