@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   UseGuards,
   NotFoundException,
@@ -97,6 +98,17 @@ export class UsersController {
     return {
       success: true,
       user: this.usersService.toUserDto(updated),
+    };
+  }
+
+  @Delete('account')
+  @ApiOperation({ summary: 'Permanently delete current user account and Cloudflare R2 assets' })
+  @ApiResponse({ status: 200, description: 'Account successfully deleted' })
+  async deleteAccount(@CurrentUser('sub') userId: string): Promise<{ success: boolean; message: string }> {
+    await this.usersService.deleteUser(userId);
+    return {
+      success: true,
+      message: 'Account and associated media successfully deleted',
     };
   }
 }

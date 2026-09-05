@@ -9,8 +9,17 @@ import { useOnboarding } from '../../features/onboarding/context/OnboardingConte
 
 export default function PreviewScreen() {
   const router = useRouter();
-  const { fullName, role, company, photoUri, completeOnboarding, isSaving, error } =
-    useOnboarding();
+  const {
+    fullName,
+    role,
+    company,
+    photoUri,
+    phoneNumber,
+    country,
+    completeOnboarding,
+    isSaving,
+    error,
+  } = useOnboarding();
 
   const handleCreateVeya = async () => {
     try {
@@ -28,6 +37,10 @@ export default function PreviewScreen() {
   const handleBack = () => {
     router.back();
   };
+
+  const formattedPhone = phoneNumber.trim()
+    ? `${country.dialCode} ${phoneNumber.trim()}`
+    : undefined;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -58,6 +71,7 @@ export default function PreviewScreen() {
               role={role}
               company={company}
               photoUri={photoUri}
+              phoneNumber={formattedPhone}
             />
           </View>
 

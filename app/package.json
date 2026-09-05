@@ -15,6 +15,7 @@
     "@expo/vector-icons": "^15.1.1",
     "@veya/shared": "workspace:*",
     "expo": "~57.0.19",
+    "expo-camera": "^57.0.4",
     "expo-constants": "~57.0.17",
     "expo-image-picker": "^57.0.15",
     "expo-linking": "~57.0.9",
@@ -24,7 +25,8 @@
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "5.7.0",
-    "react-native-screens": "~4.26.2"
+    "react-native-screens": "~4.26.2",
+    "react-native-svg": "^15.15.5"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

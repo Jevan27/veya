@@ -9,6 +9,7 @@ export interface UserDto {
   company?: string | null;
   role?: string | null;
   avatarUrl?: string | null;
+  phoneNumber?: string | null;
   onboardingCompleted?: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
@@ -48,6 +49,7 @@ export interface UpdateProfileRequest {
   company?: string;
   role?: string;
   avatarUrl?: string;
+  phoneNumber?: string;
 }
 
 /**

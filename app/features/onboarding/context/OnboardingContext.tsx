@@ -1,10 +1,15 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { usersApi } from '../../../services/api/users.api';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { COUNTRIES, CountryItem, DEFAULT_COUNTRY } from '../constants/countries';
 
 export interface OnboardingContextValue {
   fullName: string;
   setFullName: (name: string) => void;
+  phoneNumber: string;
+  setPhoneNumber: (phone: string) => void;
+  country: CountryItem;
+  setCountry: (country: CountryItem) => void;
   company: string;
   setCompany: (company: string) => void;
   role: string;
@@ -26,6 +31,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { user, updateUser } = useAuth();
 
   const [fullName, setFullName] = useState<string>(user?.name || '');
+  const [phoneNumber, setPhoneNumber] = useState<string>(user?.phoneNumber || '');
+  const [country, setCountry] = useState<CountryItem>(DEFAULT_COUNTRY);
   const [company, setCompany] = useState<string>(user?.company || '');
   const [role, setRole] = useState<string>(user?.role || '');
   const [photoUri, setPhotoUri] = useState<string | null>(user?.avatarUrl || null);
@@ -65,11 +72,15 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
 
+      const trimmedPhone = phoneNumber.trim();
+      const formattedPhone = trimmedPhone ? `${country.dialCode} ${trimmedPhone}` : undefined;
+
       await usersApi.updateProfile({
         name: fullName.trim(),
         company: company.trim() || undefined,
         role: role.trim() || undefined,
         avatarUrl: finalAvatarUrl || undefined,
+        phoneNumber: formattedPhone,
       });
 
       const response = await usersApi.completeOnboarding();
@@ -82,7 +93,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } finally {
       setIsSaving(false);
     }
-  }, [fullName, company, role, photoUri, photoBase64, updateUser]);
+  }, [fullName, phoneNumber, country, company, role, photoUri, photoBase64, updateUser]);
 
   const skipOnboarding = useCallback(async () => {
     setIsSaving(true);
@@ -101,6 +112,10 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     () => ({
       fullName,
       setFullName,
+      phoneNumber,
+      setPhoneNumber,
+      country,
+      setCountry,
       company,
       setCompany,
       role,
@@ -117,6 +132,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }),
     [
       fullName,
+      phoneNumber,
+      country,
       company,
       role,
       photoUri,

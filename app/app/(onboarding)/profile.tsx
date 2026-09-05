@@ -11,20 +11,42 @@ import { useRouter } from 'expo-router';
 import { OnboardingHeader } from '../../features/onboarding/components/OnboardingHeader';
 import { AuthInput } from '../../features/auth/components/AuthInput';
 import { AuthButton } from '../../features/auth/components/AuthButton';
+import { PhoneInput } from '../../features/onboarding/components/PhoneInput';
 import { useOnboarding } from '../../features/onboarding/context/OnboardingContext';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { fullName, setFullName } = useOnboarding();
-  const [error, setError] = useState<string | null>(null);
+  const {
+    fullName,
+    setFullName,
+    phoneNumber,
+    setPhoneNumber,
+    country,
+    setCountry,
+  } = useOnboarding();
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const handleContinue = () => {
-    const trimmed = fullName.trim();
-    if (!trimmed) {
-      setError('Please enter your full name');
-      return;
+    let hasError = false;
+    const trimmedName = fullName.trim();
+    if (!trimmedName) {
+      setNameError('Please enter your full name');
+      hasError = true;
+    } else {
+      setNameError(null);
     }
-    setError(null);
+
+    const trimmedPhone = phoneNumber.trim();
+    if (trimmedPhone && trimmedPhone.replace(/\D/g, '').length < 6) {
+      setPhoneError('Please enter a valid phone number');
+      hasError = true;
+    } else {
+      setPhoneError(null);
+    }
+
+    if (hasError) return;
+
     router.push('/(onboarding)/professional');
   };
 
@@ -59,12 +81,25 @@ export default function ProfileScreen() {
                 value={fullName}
                 onChangeText={(text) => {
                   setFullName(text);
-                  if (error) setError(null);
+                  if (nameError) setNameError(null);
                 }}
                 autoCapitalize="words"
                 autoCorrect={false}
                 autoFocus
-                error={error}
+                error={nameError}
+              />
+
+              <PhoneInput
+                label="Phone number"
+                placeholder="Mobile number (e.g. 917 555 0192)"
+                value={phoneNumber}
+                onChangeText={(text) => {
+                  setPhoneNumber(text);
+                  if (phoneError) setPhoneError(null);
+                }}
+                selectedCountry={country}
+                onSelectCountry={setCountry}
+                error={phoneError}
               />
             </View>
 

@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectsCommand,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class StorageService {
@@ -78,12 +83,41 @@ export class StorageService {
     return this.uploadBuffer(key, file.buffer, file.mimetype || 'image/jpeg');
   }
 
-  /**
-   * General file upload helper
-   */
   async uploadFile(file: Express.Multer.File, pathPrefix = 'uploads'): Promise<string> {
     const fileExt = file.originalname?.split('.').pop() || 'jpg';
     const uniqueName = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
     return this.uploadBuffer(uniqueName, file.buffer, file.mimetype || 'image/jpeg');
+  }
+
+  /**
+   * Delete all objects stored under users/{userId}/ in Cloudflare R2
+   */
+  async deleteUserDirectory(userId: string): Promise<void> {
+    if (!this.s3Client || !this.bucketName) {
+      return;
+    }
+
+    try {
+      const prefix = `users/${userId}/`;
+      const list = await this.s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucketName,
+          Prefix: prefix,
+        }),
+      );
+
+      if (list.Contents && list.Contents.length > 0) {
+        const objectsToDelete = list.Contents.map((item) => ({ Key: item.Key! }));
+        await this.s3Client.send(
+          new DeleteObjectsCommand({
+            Bucket: this.bucketName,
+            Delete: { Objects: objectsToDelete },
+          }),
+        );
+        this.logger.log(`Deleted ${objectsToDelete.length} R2 objects for user: ${userId}`);
+      }
+    } catch (err: any) {
+      this.logger.warn(`Failed to clean up R2 storage for user ${userId}: ${err?.message || err}`);
+    }
   }
 }

@@ -14,6 +14,7 @@ export interface AuthContextValue {
   login: (credentials: LoginRequest) => Promise<void>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateUser: (user: UserDto) => void;
   refreshUser: () => Promise<void>;
 }
@@ -129,6 +130,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await usersApi.deleteAccount();
+    } finally {
+      await TokenStorage.clearTokens();
+      setUser(null);
+      setError(null);
+      setIsLoading(false);
+    }
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -139,10 +152,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       register,
       logout,
+      deleteAccount,
       updateUser,
       refreshUser,
     }),
-    [user, isLoading, error, clearError, login, register, logout, updateUser, refreshUser],
+    [user, isLoading, error, clearError, login, register, logout, deleteAccount, updateUser, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

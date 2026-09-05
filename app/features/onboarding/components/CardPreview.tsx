@@ -7,6 +7,7 @@ interface CardPreviewProps {
   role: string;
   company?: string;
   photoUri: string | null;
+  phoneNumber?: string | null;
 }
 
 export const CardPreview: React.FC<CardPreviewProps> = ({
@@ -14,6 +15,7 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
   role,
   company,
   photoUri,
+  phoneNumber,
 }) => {
   const displayName = fullName.trim() || 'Your Name';
   const displayRole = role.trim() || 'Professional Role';
@@ -59,6 +61,13 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
       <Text style={styles.companyText} numberOfLines={1}>
         {displayCompany}
       </Text>
+
+      {phoneNumber ? (
+        <View style={styles.phoneBadge}>
+          <Feather name="phone" size={12} color="#4B5563" style={{ marginRight: 6 }} />
+          <Text style={styles.phoneText}>{phoneNumber}</Text>
+        </View>
+      ) : null}
 
       {/* Primary Action Button Mock */}
       <View style={styles.saveContactButton}>
@@ -179,8 +188,22 @@ const styles = StyleSheet.create({
   companyText: {
     fontSize: 13,
     color: '#6B6B6B',
-    marginBottom: 20,
+    marginBottom: 8,
     textAlign: 'center',
+  },
+  phoneBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 16,
+  },
+  phoneText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#374151',
   },
   saveContactButton: {
     backgroundColor: '#111111',

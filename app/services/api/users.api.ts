@@ -58,4 +58,13 @@ export const usersApi = {
       method: 'POST',
     });
   },
+
+  /**
+   * Permanently delete user account and associated media
+   */
+  async deleteAccount(): Promise<{ success: boolean; message: string }> {
+    return apiClient<{ success: boolean; message: string }>('/users/account', {
+      method: 'DELETE',
+    });
+  },
 };

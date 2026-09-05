@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
 import { UserDto } from '@veya/shared';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { StorageService } from '../storage/storage.service';
 
 export interface CreateUserData {
   name?: string | null;
@@ -14,7 +15,10 @@ export interface CreateUserData {
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
   async findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({
@@ -57,6 +61,7 @@ export class UsersService {
         ...(dto.company !== undefined ? { company: dto.company.trim() } : {}),
         ...(dto.role !== undefined ? { role: dto.role.trim() } : {}),
         ...(dto.avatarUrl !== undefined ? { avatarUrl: dto.avatarUrl } : {}),
+        ...(dto.phoneNumber !== undefined ? { phoneNumber: dto.phoneNumber.trim() } : {}),
       },
     });
   }
@@ -75,6 +80,21 @@ export class UsersService {
     });
   }
 
+  async deleteUser(userId: string): Promise<void> {
+    const existing = await this.findById(userId);
+    if (!existing) {
+      throw new NotFoundException('User not found');
+    }
+
+    // 1. Delete user files from Cloudflare R2 bucket
+    await this.storageService.deleteUserDirectory(userId);
+
+    // 2. Delete user record from database
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+  }
+
   toUserDto(user: User): UserDto {
     return {
       id: user.id,
@@ -83,6 +103,7 @@ export class UsersService {
       company: user.company,
       role: user.role,
       avatarUrl: user.avatarUrl,
+      phoneNumber: (user as any).phoneNumber || null,
       onboardingCompleted: user.onboardingCompleted,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
