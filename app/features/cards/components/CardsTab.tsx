@@ -1,313 +1,306 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Share,
-  Alert,
-  Modal,
-  Image,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { VeyaBusinessCard } from './VeyaBusinessCard';
+import { EditBusinessCardModal, EditBusinessCardData } from './EditBusinessCardModal';
 import { QrScannerIcon } from '../../../components/icons/QrScannerIcon';
-import { CardPreview } from '../../onboarding/components/CardPreview';
-import { UserDto } from '@veya/shared';
+import { UserDto, BusinessCardDto } from '@veya/shared';
+import { usersApi } from '../../../services/api/users.api';
+import { cardsApi } from '../../../services/api/cards.api';
 
 interface CardsTabProps {
   user: UserDto | null;
   onOpenScanner: () => void;
+  onEditCard?: () => void;
+  onUserUpdate?: (user: UserDto) => void;
+  /** Optional custom slogan (defaults to Veya brand slogan) */
+  slogan?: string | string[] | null;
 }
 
-export const CardsTab: React.FC<CardsTabProps> = ({ user, onOpenScanner }) => {
-  const [showQRModal, setShowQRModal] = useState(false);
-
+export const CardsTab: React.FC<CardsTabProps> = ({
+  user,
+  onOpenScanner,
+  onEditCard,
+  onUserUpdate,
+  slogan = 'PEOPLE\nIDEAS\nOPPORTUNITIES\nCONNECTED',
+}) => {
   const cardUrl = `https://veya.app/card/${user?.id || 'demo'}`;
-  // High quality QR code preview using standard reliable public generator
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=12&data=${encodeURIComponent(
-    cardUrl
-  )}`;
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-  const handleShareCard = async () => {
-    try {
-      await Share.share({
-        title: `${user?.name || 'Veya'} Digital Business Card`,
-        message: `Connect with ${user?.name || 'me'} on Veya: ${cardUrl}`,
-        url: cardUrl,
-      });
-    } catch (error) {
-      console.warn('Share error:', error);
+  const initialSloganString = typeof slogan === 'string'
+    ? slogan
+    : Array.isArray(slogan)
+    ? slogan.join('\n')
+    : 'PEOPLE\nIDEAS\nOPPORTUNITIES\nCONNECTED';
+
+  const [currentCardId, setCurrentCardId] = useState<string | null>(null);
+  const [userCards, setUserCards] = useState<BusinessCardDto[]>([]);
+
+  const [cardData, setCardData] = useState<EditBusinessCardData>({
+    name: user?.name || 'Jevan Campillos',
+    role: user?.role || 'Full-Stack Developer',
+    company: user?.company || 'Veya',
+    slogan: initialSloganString,
+    phoneNumber: user?.phoneNumber || '+63 912 345 6789',
+    email: user?.email || 'jevan@veya.app',
+    location: 'Caloocan, Metro Manila, Philippines',
+    website: 'https://www.veya.app',
+    avatarUrl: user?.avatarUrl || null,
+    companyLogoUrl: null,
+    primaryColor: '#111111',
+    cardBackgroundColor: '#FFFFFF',
+  });
+
+  // Fetch user's business cards from backend database
+  useEffect(() => {
+    let isMounted = true;
+    async function loadCards() {
+      if (!user) return;
+      try {
+        const cards = await cardsApi.getCards();
+        if (isMounted && cards && cards.length > 0) {
+          setUserCards(cards);
+          const primaryCard = cards.find((c) => c.isDefault) || cards[0];
+          setCurrentCardId(primaryCard.id);
+          setCardData({
+            name: primaryCard.name || user.name || '',
+            role: primaryCard.role || user.role || '',
+            company: primaryCard.company || user.company || '',
+            slogan: primaryCard.slogan || initialSloganString,
+            phoneNumber: primaryCard.phoneNumber || user.phoneNumber || '',
+            email: primaryCard.email || user.email || '',
+            location: primaryCard.location || 'Caloocan, Metro Manila, Philippines',
+            website: primaryCard.website || 'https://www.veya.app',
+            avatarUrl: primaryCard.avatarUrl ?? user.avatarUrl ?? null,
+            companyLogoUrl: primaryCard.companyLogoUrl ?? null,
+            primaryColor: primaryCard.primaryColor || '#111111',
+            cardBackgroundColor: primaryCard.cardBackgroundColor || '#FFFFFF',
+          });
+        }
+      } catch (err) {
+        console.warn('[CardsTab] Failed to fetch cards from database:', err);
+      }
+    }
+    loadCards();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  const handleOpenEdit = () => {
+    setIsEditModalVisible(true);
+    if (onEditCard) {
+      onEditCard();
     }
   };
 
-  const handleCopyLink = () => {
-    Alert.alert('Link Copied', `Card URL: ${cardUrl}\nReady to paste and share anywhere.`);
+  const handleSaveCard = async (updated: EditBusinessCardData) => {
+    let finalAvatarUrl = updated.avatarUrl;
+    let finalCompanyLogoUrl = updated.companyLogoUrl;
+
+    // 1. Upload company logo to Cloudflare R2 if a new local image was selected
+    if (updated.companyLogoUrl && updated.companyLogoUrl.startsWith('file:')) {
+      try {
+        const logoRes = await cardsApi.uploadCompanyLogo(updated.companyLogoUrl);
+        finalCompanyLogoUrl = logoRes.companyLogoUrl;
+      } catch (logoErr) {
+        console.warn('[CardsTab] Company logo upload error:', logoErr);
+      }
+    }
+
+    // 2. Upload avatar to Cloudflare R2 if a new local image was selected
+    if (updated.avatarUrl && updated.avatarUrl.startsWith('file:')) {
+      try {
+        const uploadRes = await usersApi.uploadProfilePhoto(updated.avatarUrl);
+        finalAvatarUrl = uploadRes.avatarUrl;
+      } catch (uploadErr) {
+        console.warn('[CardsTab] Avatar upload error:', uploadErr);
+      }
+    }
+
+    const mergedData: EditBusinessCardData = {
+      ...updated,
+      avatarUrl: finalAvatarUrl,
+      companyLogoUrl: finalCompanyLogoUrl,
+    };
+
+    setCardData(mergedData);
+
+    // 3. Save to database table `business_cards`
+    if (user) {
+      try {
+        if (currentCardId) {
+          const updatedCard = await cardsApi.updateCard(currentCardId, {
+            name: mergedData.name,
+            role: mergedData.role,
+            company: mergedData.company,
+            slogan: mergedData.slogan,
+            phoneNumber: mergedData.phoneNumber,
+            email: mergedData.email,
+            location: mergedData.location,
+            website: mergedData.website,
+            avatarUrl: mergedData.avatarUrl,
+            companyLogoUrl: mergedData.companyLogoUrl,
+            primaryColor: mergedData.primaryColor,
+            cardBackgroundColor: mergedData.cardBackgroundColor,
+          });
+          setUserCards((prev) =>
+            prev.map((c) => (c.id === currentCardId ? updatedCard : c)),
+          );
+        } else {
+          const newCard = await cardsApi.createCard({
+            name: mergedData.name,
+            role: mergedData.role,
+            company: mergedData.company,
+            slogan: mergedData.slogan,
+            phoneNumber: mergedData.phoneNumber,
+            email: mergedData.email,
+            location: mergedData.location,
+            website: mergedData.website,
+            avatarUrl: mergedData.avatarUrl,
+            companyLogoUrl: mergedData.companyLogoUrl,
+            primaryColor: mergedData.primaryColor,
+            cardBackgroundColor: mergedData.cardBackgroundColor,
+            isDefault: true,
+          });
+          setCurrentCardId(newCard.id);
+          setUserCards((prev) => [newCard, ...prev]);
+        }
+
+        // 4. Also update User profile record for consistency
+        const updatedProfile = await usersApi.updateProfile({
+          name: mergedData.name,
+          role: mergedData.role,
+          company: mergedData.company,
+          phoneNumber: mergedData.phoneNumber,
+          avatarUrl: finalAvatarUrl || undefined,
+        });
+
+        if (onUserUpdate) {
+          onUserUpdate({
+            ...user,
+            ...updatedProfile,
+            avatarUrl: finalAvatarUrl || updatedProfile.avatarUrl,
+          });
+        }
+      } catch (apiErr) {
+        console.warn('[CardsTab] Failed to persist card to database:', apiErr);
+      }
+    }
+  };
+
+  const effectiveUser: UserDto = {
+    id: user?.id || 'demo',
+    email: cardData.email,
+    name: cardData.name,
+    role: cardData.role,
+    company: cardData.company,
+    phoneNumber: cardData.phoneNumber,
+    avatarUrl: cardData.avatarUrl,
+    onboardingCompleted: true,
+    createdAt: user?.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Top Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.brandTitle}>veya</Text>
-          <Text style={styles.subtitle}>Digital Business Cards</Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.scanHeaderButton}
-          onPress={onOpenScanner}
-          activeOpacity={0.8}
-          accessibilityLabel="Open Quick QR Scanner"
-        >
-          <QrScannerIcon size={18} color="#111111" strokeWidth={2.2} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Primary Card View */}
-      <View style={styles.cardSection}>
-        <CardPreview
-          fullName={user?.name || 'Veya Member'}
-          role={user?.role || 'Professional'}
-          company={user?.company || undefined}
-          photoUri={user?.avatarUrl || null}
-          phoneNumber={user?.phoneNumber || undefined}
-        />
-      </View>
-
-      {/* Action Buttons Row */}
-      <View style={styles.actionGrid}>
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => setShowQRModal(true)}
-          activeOpacity={0.8}
-        >
-          <View style={styles.actionIconBg}>
-            <Feather name="grid" size={20} color="#111111" />
-          </View>
-          <Text style={styles.actionTitle}>Show QR</Text>
-          <Text style={styles.actionSubtitle}>In-person scan</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={handleShareCard}
-          activeOpacity={0.8}
-        >
-          <View style={styles.actionIconBg}>
-            <Feather name="share-2" size={20} color="#111111" />
-          </View>
-          <Text style={styles.actionTitle}>Share Card</Text>
-          <Text style={styles.actionSubtitle}>Send link</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={handleCopyLink}
-          activeOpacity={0.8}
-        >
-          <View style={styles.actionIconBg}>
-            <Feather name="link-2" size={20} color="#111111" />
-          </View>
-          <Text style={styles.actionTitle}>Copy Link</Text>
-          <Text style={styles.actionSubtitle}>Clipboard</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Personal QR Code Modal */}
-      <Modal
-        visible={showQRModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowQRModal(false)}
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.qrModalCard}>
-            <View style={styles.qrModalHeader}>
-              <Text style={styles.qrModalTitle}>My Veya QR</Text>
-              <TouchableOpacity
-                onPress={() => setShowQRModal(false)}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Feather name="x" size={20} color="#111111" />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.qrModalDesc}>
-              Let others scan your QR code with their phone camera to instantly view and save your digital card.
-            </Text>
-
-            <View style={styles.qrImageWrapper}>
-              <Image source={{ uri: qrCodeUrl }} style={styles.qrImage} resizeMode="contain" />
-            </View>
-
-            <Text style={styles.cardUrlText}>{cardUrl}</Text>
-
-            <TouchableOpacity
-              style={styles.qrDoneButton}
-              onPress={() => setShowQRModal(false)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.qrDoneButtonText}>Close</Text>
-            </TouchableOpacity>
+        {/* ──────────────── TOP NAVIGATION BAR ──────────────── */}
+        <View style={styles.navBar}>
+          <View style={styles.brandTitleWrapper}>
+            <Text style={styles.brandTitle}>veya</Text>
           </View>
+
+          <TouchableOpacity
+            style={styles.navIconButton}
+            onPress={onOpenScanner}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityLabel="Open QR Scanner"
+          >
+            <QrScannerIcon size={21} color="#0F172A" strokeWidth={2.4} />
+          </TouchableOpacity>
         </View>
-      </Modal>
-    </ScrollView>
+
+        {/* ──────────────── PRIMARY LANDSCAPE DIGITAL BUSINESS CARD ──────────────── */}
+        <View style={styles.cardContainer}>
+          <VeyaBusinessCard
+            user={effectiveUser}
+            cardUrl={cardUrl}
+            address={cardData.location}
+            website={cardData.website}
+            slogan={cardData.slogan}
+            companyLogoUrl={cardData.companyLogoUrl}
+            primaryColor={cardData.primaryColor}
+            cardBackgroundColor={cardData.cardBackgroundColor}
+            onEdit={handleOpenEdit}
+          />
+        </View>
+      </ScrollView>
+
+      {/* ──────────────── EDIT BUSINESS CARD BOTTOM SHEET MODAL ──────────────── */}
+      <EditBusinessCardModal
+        visible={isEditModalVisible}
+        onClose={() => setIsEditModalVisible(false)}
+        cardData={cardData}
+        onSave={handleSaveCard}
+      />
+    </>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
   contentContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 110,
     maxWidth: 480,
     width: '100%',
     alignSelf: 'center',
   },
-  header: {
+
+  /* ──────── Top Bar ──────── */
+  navBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  brandTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#111111',
-    letterSpacing: -1,
-  },
-  subtitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#6B6B6B',
-    marginTop: 2,
-  },
-  scanHeaderButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FAFAFA',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardSection: {
-    marginBottom: 16,
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 24,
-  },
-  actionCard: {
-    flex: 1,
-    backgroundColor: '#FAFAFA',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-  },
-  actionIconBg: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 12,
     marginBottom: 8,
   },
-  actionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#111111',
-    marginBottom: 2,
-  },
-  actionSubtitle: {
-    fontSize: 11,
-    color: '#6B6B6B',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  qrModalCard: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
-  },
-  qrModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 12,
-  },
-  qrModalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111111',
-    letterSpacing: -0.3,
-  },
-  qrModalDesc: {
-    fontSize: 13,
-    color: '#6B6B6B',
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 20,
-  },
-  qrImageWrapper: {
-    width: 220,
-    height: 220,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
+  navIconButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  brandTitleWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.8,
+  },
+
+  /* ──────── Card Section ──────── */
+  cardContainer: {
+    width: '100%',
     marginBottom: 16,
-    padding: 8,
-  },
-  qrImage: {
-    width: '100%',
-    height: '100%',
-  },
-  cardUrlText: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 20,
-  },
-  qrDoneButton: {
-    width: '100%',
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#111111',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  qrDoneButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

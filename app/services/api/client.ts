@@ -12,25 +12,26 @@ import { TokenStorage } from '../storage/token.storage';
 export function getBaseApiUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
 
-  // On Web, localhost resolves directly to the machine running the browser
+  // 1. If pointing to a deployed/remote server (e.g. https://), always use it
+  if (envUrl && envUrl.startsWith('https://')) {
+    return envUrl;
+  }
+
+  // 2. On Web, localhost resolves directly to the machine running the browser
   if (Platform.OS === 'web') {
     return envUrl || 'http://localhost:3000/api/v1';
   }
 
-  // If explicit LAN IP or remote domain is configured, prioritize it
-  if (
-    envUrl &&
-    !envUrl.includes('localhost') &&
-    !envUrl.includes('127.0.0.1')
-  ) {
-    return envUrl;
-  }
+  // 3. In local development on mobile (Expo Go / Dev Client), automatically discover host IP
+  if (__DEV__) {
+    const hostUri =
+      Constants.expoConfig?.hostUri ??
+      (Constants as unknown as { manifest2?: { extra?: { expoGo?: { debuggerHost?: string } } } })?.manifest2?.extra?.expoGo?.debuggerHost;
 
-  // In Expo Go / Dev Client on a mobile device, hostUri provides the computer's LAN IP
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (hostUri) {
-    const hostIp = hostUri.split(':')[0];
-    return `http://${hostIp}:3000/api/v1`;
+    if (hostUri) {
+      const hostIp = hostUri.split(':')[0];
+      return `http://${hostIp}:3000/api/v1`;
+    }
   }
 
   return envUrl || 'http://localhost:3000/api/v1';

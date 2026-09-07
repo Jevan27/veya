@@ -27,5 +27,31 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
+  cards              BusinessCard[]
+
   @@map("users")
 }
+
+model BusinessCard {
+  id                  String   @id @default(uuid())
+  userId              String   @map("user_id")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                String
+  role                String?
+  company             String?
+  slogan              String?
+  phoneNumber         String?  @map("phone_number")
+  email               String?
+  location            String?
+  website             String?
+  avatarUrl           String?  @map("avatar_url")
+  companyLogoUrl      String?  @map("company_logo_url")
+  primaryColor        String?  @default("#111111") @map("primary_color")
+  cardBackgroundColor String?  @default("#FFFFFF") @map("card_background_color")
+  isDefault           Boolean  @default(false) @map("is_default")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("business_cards")
+}
+

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -6,6 +6,9 @@ import {
   ListObjectsV2Command,
   DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
+
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif']);
 
 @Injectable()
 export class StorageService {
@@ -62,6 +65,43 @@ export class StorageService {
     }
 
     return `https://${this.bucketName}.r2.cloudflarestorage.com/${key}`;
+  }
+
+  /**
+   * Validates and uploads a company logo for a user:
+   * Path: users/{userId}/companylogo/logo-{timestamp}.{ext}
+   * Rules:
+   * - Max 5MB file size
+   * - Image file extensions only (jpg, jpeg, png, webp, svg, gif)
+   */
+  async uploadCompanyLogo(params: {
+    userId: string;
+    buffer: Buffer;
+    originalName?: string;
+    mimeType?: string;
+  }): Promise<string> {
+    const { userId, buffer, originalName, mimeType = 'image/jpeg' } = params;
+
+    // Check 5MB limit
+    if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
+      throw new BadRequestException('Company logo file size exceeds the 5MB limit');
+    }
+
+    // Check extension
+    const ext = (originalName?.split('.').pop() || mimeType.split('/').pop() || 'png').toLowerCase();
+    if (!ALLOWED_IMAGE_EXTENSIONS.has(ext)) {
+      throw new BadRequestException(
+        `Invalid file extension '.${ext}'. Only image files (jpg, jpeg, png, webp, svg, gif) are allowed.`,
+      );
+    }
+
+    // Check MIME type prefix
+    if (!mimeType.startsWith('image/')) {
+      throw new BadRequestException('Only image files are allowed');
+    }
+
+    const key = `users/${userId}/companylogo/logo-${Date.now()}.${ext}`;
+    return this.uploadBuffer(key, buffer, mimeType);
   }
 
   /**

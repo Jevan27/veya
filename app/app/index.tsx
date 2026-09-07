@@ -52,6 +52,7 @@ export default function HomeScreen() {
           <CardsTab
             user={user}
             onOpenScanner={() => setIsScannerVisible(true)}
+            onUserUpdate={updateUser}
           />
         ) : (
           <SettingsTab
