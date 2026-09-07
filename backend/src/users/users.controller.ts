@@ -9,26 +9,23 @@ import {
   NotFoundException,
   UseInterceptors,
   UploadedFile,
-  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { StorageService } from '../storage/storage.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserDto, CompleteOnboardingResponse } from '@veya/shared';
+import { Throttle } from '@nestjs/throttler';
+import { MAX_IMAGE_SIZE_BYTES } from '../storage/file-validation.util';
 
 @ApiTags('users')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly storageService: StorageService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
   @ApiOperation({ summary: 'Get current authenticated user profile' })
@@ -52,12 +49,13 @@ export class UsersController {
     return this.usersService.toUserDto(updated);
   }
 
+  @Throttle({ upload: { limit: 10, ttl: 60000 } })
   @Post('profile/photo')
-  @ApiOperation({ summary: 'Upload profile photo to Cloudflare R2' })
+  @ApiOperation({ summary: 'Upload profile photo to Cloudflare R2 (Max 5MB, JPEG/PNG/WebP)' })
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(
     FileInterceptor('photo', {
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+      limits: { fileSize: MAX_IMAGE_SIZE_BYTES },
     }),
   )
   async uploadProfilePhoto(
@@ -65,29 +63,7 @@ export class UsersController {
     @UploadedFile() file?: Express.Multer.File,
     @Body() body?: { base64?: string; mimeType?: string; fileName?: string },
   ): Promise<{ avatarUrl: string }> {
-    let buffer: Buffer;
-    let mimeType = 'image/jpeg';
-    let fileExt = 'jpg';
-
-    if (file && file.buffer) {
-      buffer = file.buffer;
-      mimeType = file.mimetype || 'image/jpeg';
-      fileExt = file.originalname?.split('.').pop() || 'jpg';
-    } else if (body?.base64) {
-      const cleanBase64 = body.base64.replace(/^data:image\/\w+;base64,/, '');
-      buffer = Buffer.from(cleanBase64, 'base64');
-      mimeType = body.mimeType || 'image/jpeg';
-      if (mimeType.includes('png')) fileExt = 'png';
-      else if (mimeType.includes('webp')) fileExt = 'webp';
-      else fileExt = 'jpg';
-    } else {
-      throw new BadRequestException('Image file or base64 data is required');
-    }
-
-    const key = `users/${userId}/userpfp/user.${fileExt}`;
-    const avatarUrl = await this.storageService.uploadBuffer(key, buffer, mimeType);
-    await this.usersService.updateProfile(userId, { avatarUrl });
-    return { avatarUrl };
+    return this.usersService.uploadProfilePhoto(userId, { file, ...body });
   }
 
   @Post('onboarding/complete')

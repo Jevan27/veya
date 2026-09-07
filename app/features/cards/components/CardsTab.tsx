@@ -6,11 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { VeyaBusinessCard } from './VeyaBusinessCard';
-import { EditBusinessCardModal, EditBusinessCardData } from './EditBusinessCardModal';
+import { VeyaCard } from './VeyaCard/VeyaCard';
+import { EditCardModal } from './EditCardModal/EditCardModal';
+import { EditCardData } from '../types/card-form.types';
 import { QrScannerIcon } from '../../../components/icons/QrScannerIcon';
-import { UserDto, BusinessCardDto } from '@veya/shared';
+import { UserDto, CardDto } from '@veya/shared';
 import { usersApi } from '../../../services/api/users.api';
 import { cardsApi } from '../../../services/api/cards.api';
 
@@ -40,9 +40,9 @@ export const CardsTab: React.FC<CardsTabProps> = ({
     : 'PEOPLE\nIDEAS\nOPPORTUNITIES\nCONNECTED';
 
   const [currentCardId, setCurrentCardId] = useState<string | null>(null);
-  const [userCards, setUserCards] = useState<BusinessCardDto[]>([]);
+  const [, setUserCards] = useState<CardDto[]>([]);
 
-  const [cardData, setCardData] = useState<EditBusinessCardData>({
+  const [cardData, setCardData] = useState<EditCardData>({
     name: user?.name || 'Jevan Campillos',
     role: user?.role || 'Full-Stack Developer',
     company: user?.company || 'Veya',
@@ -100,7 +100,7 @@ export const CardsTab: React.FC<CardsTabProps> = ({
     }
   };
 
-  const handleSaveCard = async (updated: EditBusinessCardData) => {
+  const handleSaveCard = async (updated: EditCardData) => {
     let finalAvatarUrl = updated.avatarUrl;
     let finalCompanyLogoUrl = updated.companyLogoUrl;
 
@@ -124,7 +124,7 @@ export const CardsTab: React.FC<CardsTabProps> = ({
       }
     }
 
-    const mergedData: EditBusinessCardData = {
+    const mergedData: EditCardData = {
       ...updated,
       avatarUrl: finalAvatarUrl,
       companyLogoUrl: finalCompanyLogoUrl,
@@ -232,9 +232,9 @@ export const CardsTab: React.FC<CardsTabProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* ──────────────── PRIMARY LANDSCAPE DIGITAL BUSINESS CARD ──────────────── */}
+        {/* ──────────────── PRIMARY LANDSCAPE DIGITAL CARD ──────────────── */}
         <View style={styles.cardContainer}>
-          <VeyaBusinessCard
+          <VeyaCard
             user={effectiveUser}
             cardUrl={cardUrl}
             address={cardData.location}
@@ -248,8 +248,8 @@ export const CardsTab: React.FC<CardsTabProps> = ({
         </View>
       </ScrollView>
 
-      {/* ──────────────── EDIT BUSINESS CARD BOTTOM SHEET MODAL ──────────────── */}
-      <EditBusinessCardModal
+      {/* ──────────────── EDIT CARD BOTTOM SHEET MODAL ──────────────── */}
+      <EditCardModal
         visible={isEditModalVisible}
         onClose={() => setIsEditModalVisible(false)}
         cardData={cardData}

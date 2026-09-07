@@ -1,7 +1,7 @@
 /**
- * Shared Business Card representation across client and server.
+ * Shared Digital Card representation across client and server.
  */
-export interface BusinessCardDto {
+export interface CardDto {
   id: string;
   userId: string;
   name: string;
@@ -21,7 +21,12 @@ export interface BusinessCardDto {
   updatedAt: string | Date;
 }
 
-export interface CreateBusinessCardDto {
+/**
+ * Backwards-compatibility alias for CardDto.
+ */
+export type BusinessCardDto = CardDto;
+
+export interface CreateCardDto {
   name: string;
   role?: string;
   company?: string;
@@ -37,7 +42,12 @@ export interface CreateBusinessCardDto {
   isDefault?: boolean;
 }
 
-export interface UpdateBusinessCardDto {
+/**
+ * Backwards-compatibility alias for CreateCardDto.
+ */
+export type CreateBusinessCardDto = CreateCardDto;
+
+export interface UpdateCardDto {
   name?: string;
   role?: string;
   company?: string;
@@ -52,3 +62,8 @@ export interface UpdateBusinessCardDto {
   cardBackgroundColor?: string;
   isDefault?: boolean;
 }
+
+/**
+ * Backwards-compatibility alias for UpdateCardDto.
+ */
+export type UpdateBusinessCardDto = UpdateCardDto;

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { usersApi } from '../../../services/api/users.api';
 import { useAuth } from '../../auth/hooks/useAuth';
-import { COUNTRIES, CountryItem, DEFAULT_COUNTRY } from '../constants/countries';
+import { CountryItem, DEFAULT_COUNTRY } from '../constants/countries';
 
 export interface OnboardingContextValue {
   fullName: string;

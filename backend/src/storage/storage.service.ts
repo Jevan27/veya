@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
@@ -6,9 +6,7 @@ import {
   ListObjectsV2Command,
   DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
-
-const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif']);
+import { validateImageBuffer } from './file-validation.util';
 
 @Injectable()
 export class StorageService {
@@ -36,35 +34,42 @@ export class StorageService {
       this.logger.log('Cloudflare R2 storage client successfully initialized');
     } else {
       this.logger.warn(
-        'Cloudflare R2 storage credentials not configured. Please supply R2 credentials in .env',
+        'Cloudflare R2 storage credentials not configured. Upload requests will fail safely until configured.',
       );
     }
   }
 
   /**
-   * Upload raw buffer to R2 under the specified key
+   * Upload raw buffer to R2 under the specified key.
+   * Throws ServiceUnavailableException if storage is unconfigured or unavailable.
    */
   async uploadBuffer(key: string, buffer: Buffer, contentType: string): Promise<string> {
     if (!this.s3Client || !this.bucketName) {
-      this.logger.warn(`R2 client not configured. Simulating image upload for: ${key}`);
-      return `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80`;
+      this.logger.error(`Storage unavailable: Cloudflare R2 client or bucket is not configured. Failed to upload: ${key}`);
+      throw new ServiceUnavailableException('Storage service is currently unavailable. Please try again later.');
     }
 
-    const command = new PutObjectCommand({
-      Bucket: this.bucketName,
-      Key: key,
-      Body: buffer,
-      ContentType: contentType,
-    });
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      });
 
-    await this.s3Client.send(command);
-    this.logger.log(`Uploaded file to Cloudflare R2: ${key}`);
+      await this.s3Client.send(command);
+      this.logger.log(`Uploaded file to Cloudflare R2: ${key}`);
 
-    if (this.publicDomain) {
-      return `${this.publicDomain}/${key}`;
+      if (this.publicDomain) {
+        return `${this.publicDomain}/${key}`;
+      }
+
+      return `https://${this.bucketName}.r2.cloudflarestorage.com/${key}`;
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Failed to upload object to Cloudflare R2: ${errorMsg}`);
+      throw new ServiceUnavailableException('Failed to upload file to storage');
     }
-
-    return `https://${this.bucketName}.r2.cloudflarestorage.com/${key}`;
   }
 
   /**
@@ -72,7 +77,7 @@ export class StorageService {
    * Path: users/{userId}/companylogo/logo-{timestamp}.{ext}
    * Rules:
    * - Max 5MB file size
-   * - Image file extensions only (jpg, jpeg, png, webp, svg, gif)
+   * - Image formats: JPEG, PNG, WebP only (validated via magic bytes)
    */
   async uploadCompanyLogo(params: {
     userId: string;
@@ -80,34 +85,16 @@ export class StorageService {
     originalName?: string;
     mimeType?: string;
   }): Promise<string> {
-    const { userId, buffer, originalName, mimeType = 'image/jpeg' } = params;
-
-    // Check 5MB limit
-    if (buffer.length > MAX_IMAGE_SIZE_BYTES) {
-      throw new BadRequestException('Company logo file size exceeds the 5MB limit');
-    }
-
-    // Check extension
-    const ext = (originalName?.split('.').pop() || mimeType.split('/').pop() || 'png').toLowerCase();
-    if (!ALLOWED_IMAGE_EXTENSIONS.has(ext)) {
-      throw new BadRequestException(
-        `Invalid file extension '.${ext}'. Only image files (jpg, jpeg, png, webp, svg, gif) are allowed.`,
-      );
-    }
-
-    // Check MIME type prefix
-    if (!mimeType.startsWith('image/')) {
-      throw new BadRequestException('Only image files are allowed');
-    }
-
-    const key = `users/${userId}/companylogo/logo-${Date.now()}.${ext}`;
-    return this.uploadBuffer(key, buffer, mimeType);
+    const { userId, buffer, originalName, mimeType } = params;
+    const { detectedMime, extension } = validateImageBuffer(buffer, originalName, mimeType);
+    const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '');
+    const key = `users/${safeUserId}/companylogo/logo-${Date.now()}.${extension}`;
+    return this.uploadBuffer(key, buffer, detectedMime);
   }
 
   /**
    * Uploads a file organized by user and purpose:
    * Format: users -> {userId} -> {purpose} -> {fileName}
-   * e.g. users/{userId}/userpfp/user.jpg
    */
   async uploadUserFile(params: {
     userId: string;
@@ -116,17 +103,22 @@ export class StorageService {
     customFileName?: string;
   }): Promise<string> {
     const { userId, purpose, file, customFileName } = params;
-    const fileExt = file.originalname?.split('.').pop() || 'jpg';
-    const fileName = customFileName || `user.${fileExt}`;
-    const key = `users/${userId}/${purpose}/${fileName}`;
+    const { detectedMime, extension } = validateImageBuffer(file.buffer, file.originalname, file.mimetype);
+    const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '');
+    const safePurpose = purpose.replace(/[^a-zA-Z0-9_-]/g, '');
+    const fileName = customFileName
+      ? customFileName.replace(/[^a-zA-Z0-9._-]/g, '')
+      : `avatar-${Date.now()}.${extension}`;
+    const key = `users/${safeUserId}/${safePurpose}/${fileName}`;
 
-    return this.uploadBuffer(key, file.buffer, file.mimetype || 'image/jpeg');
+    return this.uploadBuffer(key, file.buffer, detectedMime);
   }
 
   async uploadFile(file: Express.Multer.File, pathPrefix = 'uploads'): Promise<string> {
-    const fileExt = file.originalname?.split('.').pop() || 'jpg';
-    const uniqueName = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
-    return this.uploadBuffer(uniqueName, file.buffer, file.mimetype || 'image/jpeg');
+    const { detectedMime, extension } = validateImageBuffer(file.buffer, file.originalname, file.mimetype);
+    const safePrefix = pathPrefix.replace(/[^a-zA-Z0-9_-]/g, '');
+    const uniqueName = `${safePrefix}/${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${extension}`;
+    return this.uploadBuffer(uniqueName, file.buffer, detectedMime);
   }
 
   /**
@@ -138,7 +130,8 @@ export class StorageService {
     }
 
     try {
-      const prefix = `users/${userId}/`;
+      const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '');
+      const prefix = `users/${safeUserId}/`;
       const list = await this.s3Client.send(
         new ListObjectsV2Command({
           Bucket: this.bucketName,
@@ -156,8 +149,9 @@ export class StorageService {
         );
         this.logger.log(`Deleted ${objectsToDelete.length} R2 objects for user: ${userId}`);
       }
-    } catch (err: any) {
-      this.logger.warn(`Failed to clean up R2 storage for user ${userId}: ${err?.message || err}`);
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Failed to clean up R2 storage for user ${userId}: ${errorMsg}`);
     }
   }
 }

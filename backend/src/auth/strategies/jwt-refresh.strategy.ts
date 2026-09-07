@@ -8,6 +8,10 @@ import { JwtPayload } from '../types/jwt-payload.type';
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(configService: ConfigService) {
+    const refreshSecret = configService.get<string>('jwt.refreshSecret');
+    if (!refreshSecret) {
+      throw new Error('JWT_REFRESH_SECRET is required to initialize JwtRefreshStrategy');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => {
@@ -22,8 +26,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('jwt.refreshSecret') || 'veya_default_refresh_secret_fallback',
+      secretOrKey: refreshSecret,
       passReqToCallback: true,
     } as StrategyOptionsWithRequest);
   }

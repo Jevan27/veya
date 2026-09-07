@@ -77,18 +77,32 @@ export function validate(config: Record<string, unknown>) {
     throw new Error(errors.toString());
   }
 
+  // JWT secrets are strictly required in all environments to prevent running with predictable fallbacks
+  const missingJwt: string[] = [];
+  const accessSecret = (validatedConfig.JWT_ACCESS_SECRET || validatedConfig.JWT_SECRET || '').trim();
+  const refreshSecret = (validatedConfig.JWT_REFRESH_SECRET || '').trim();
+
+  if (!accessSecret) {
+    missingJwt.push('JWT_ACCESS_SECRET (or JWT_SECRET)');
+  }
+  if (!refreshSecret) {
+    missingJwt.push('JWT_REFRESH_SECRET');
+  }
+
+  if (missingJwt.length > 0) {
+    throw new Error(
+      `Configuration error: Missing required JWT secret environment variable(s): ${missingJwt.join(', ')}. The application will not run without explicit, non-empty secrets.`,
+    );
+  }
+
   // Ensure production security checks
   if (validatedConfig.NODE_ENV === Environment.Production) {
-    const missing: string[] = [];
-    if (!validatedConfig.DATABASE_URL) missing.push('DATABASE_URL');
-    if (!validatedConfig.JWT_ACCESS_SECRET && !validatedConfig.JWT_SECRET) {
-      missing.push('JWT_ACCESS_SECRET');
-    }
-    if (!validatedConfig.JWT_REFRESH_SECRET) missing.push('JWT_REFRESH_SECRET');
+    const missingProd: string[] = [];
+    if (!validatedConfig.DATABASE_URL) missingProd.push('DATABASE_URL');
 
-    if (missing.length > 0) {
+    if (missingProd.length > 0) {
       throw new Error(
-        `Production configuration error: Missing required environment variables: ${missing.join(', ')}`,
+        `Production configuration error: Missing required environment variables: ${missingProd.join(', ')}`,
       );
     }
   }

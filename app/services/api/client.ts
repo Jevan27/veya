@@ -65,6 +65,63 @@ function addRefreshSubscriber(cb: (token: string | null) => void) {
   refreshSubscribers.push(cb);
 }
 
+/**
+ * Shared token refresh coordinator.
+ * Mutually excludes concurrent refresh calls and queues waiting requests.
+ */
+export async function refreshAuthTokens(): Promise<string> {
+  if (isRefreshing) {
+    return new Promise<string>((resolve, reject) => {
+      addRefreshSubscriber((newToken) => {
+        if (!newToken) {
+          reject(new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401));
+        } else {
+          resolve(newToken);
+        }
+      });
+    });
+  }
+
+  isRefreshing = true;
+  try {
+    const refreshToken = await TokenStorage.getRefreshToken();
+    if (!refreshToken) {
+      await TokenStorage.clearTokens();
+      onRefreshed(null);
+      throw new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401);
+    }
+
+    const baseUrl = getBaseApiUrl();
+    const refreshRes = await fetch(`${baseUrl}${AUTH_ROUTES.REFRESH}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${refreshToken}`,
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!refreshRes.ok) {
+      await TokenStorage.clearTokens();
+      onRefreshed(null);
+      throw new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401);
+    }
+
+    const data = await refreshRes.json();
+    await TokenStorage.setTokens(data);
+    onRefreshed(data.accessToken);
+    return data.accessToken;
+  } catch (refreshErr) {
+    await TokenStorage.clearTokens();
+    onRefreshed(null);
+    throw refreshErr instanceof ApiError
+      ? refreshErr
+      : new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401, refreshErr);
+  } finally {
+    isRefreshing = false;
+  }
+}
+
 export async function apiClient<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const baseUrl = getBaseApiUrl();
   const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
@@ -102,70 +159,16 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
     !endpoint.includes('/auth/login') &&
     !endpoint.includes('/auth/refresh')
   ) {
-    if (!isRefreshing) {
-      isRefreshing = true;
-      try {
-        const refreshToken = await TokenStorage.getRefreshToken();
-        if (!refreshToken) {
-          await TokenStorage.clearTokens();
-          throw new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401);
-        }
-
-        const refreshRes = await fetch(`${baseUrl}${AUTH_ROUTES.REFRESH}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${refreshToken}`,
-          },
-          body: JSON.stringify({ refreshToken }),
-        });
-
-        if (!refreshRes.ok) {
-          await TokenStorage.clearTokens();
-          onRefreshed(null);
-          throw new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401);
-        }
-
-        const data = await refreshRes.json();
-        await TokenStorage.setTokens(data);
-        onRefreshed(data.accessToken);
-
-        // Retry original request with new token
-        headers.set('Authorization', `Bearer ${data.accessToken}`);
-        const retryRes = await fetch(url, { ...options, headers });
-        return parseResponse<T>(retryRes);
-      } catch (refreshErr) {
-        await TokenStorage.clearTokens();
-        throw refreshErr instanceof ApiError
-          ? refreshErr
-          : new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401, refreshErr);
-      } finally {
-        isRefreshing = false;
-      }
-    } else {
-      // Wait for ongoing refresh
-      return new Promise<T>((resolve, reject) => {
-        addRefreshSubscriber(async (newToken) => {
-          if (!newToken) {
-            reject(new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401));
-            return;
-          }
-          headers.set('Authorization', `Bearer ${newToken}`);
-          try {
-            const retryRes = await fetch(url, { ...options, headers });
-            resolve(await parseResponse<T>(retryRes));
-          } catch (err) {
-            reject(err);
-          }
-        });
-      });
-    }
+    const newAccessToken = await refreshAuthTokens();
+    headers.set('Authorization', `Bearer ${newAccessToken}`);
+    const retryRes = await fetch(url, { ...options, headers });
+    return parseResponse<T>(retryRes, endpoint);
   }
 
-  return parseResponse<T>(response);
+  return parseResponse<T>(response, endpoint);
 }
 
-async function parseResponse<T>(response: Response): Promise<T> {
+async function parseResponse<T>(response: Response, endpoint?: string): Promise<T> {
   const contentType = response.headers.get('content-type');
   const isJson = contentType && contentType.includes('application/json');
   const data = isJson ? await response.json().catch(() => null) : null;
@@ -174,7 +177,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
     let message: string = AUTH_ERROR_MESSAGES.SERVER_ERROR;
 
     if (data && typeof data === 'object') {
-      if (typeof data.message === 'string') {
+      if (typeof data.message === 'string' && data.message.trim()) {
         message = data.message;
       } else if (Array.isArray(data.message) && data.message.length > 0) {
         message = data.message[0];
@@ -182,7 +185,22 @@ async function parseResponse<T>(response: Response): Promise<T> {
     }
 
     if (response.status === 401) {
-      message = AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS;
+      const isLoginRoute = endpoint && endpoint.includes('/auth/login');
+      if (isLoginRoute) {
+        message =
+          message !== AUTH_ERROR_MESSAGES.SERVER_ERROR
+            ? message
+            : AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS;
+      } else {
+        // Authenticated session failure
+        message =
+          message &&
+          message !== AUTH_ERROR_MESSAGES.SERVER_ERROR &&
+          message !== 'Unauthorized' &&
+          message !== AUTH_ERROR_MESSAGES.INVALID_CREDENTIALS
+            ? message
+            : AUTH_ERROR_MESSAGES.UNAUTHORIZED;
+      }
     }
 
     throw new ApiError(message, response.status, data);
@@ -191,12 +209,23 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return data as T;
 }
 
+export interface UploadOptions {
+  onProgress?: (progress: number) => void;
+  retryCount?: number;
+}
+
 /**
  * Uploads a file via React Native's native XMLHttpRequest, which natively
  * supports React Native's FormData `{ uri, name, type }` objects without
  * triggering the modern WinterCG fetch `Unsupported FormDataPart implementation` error.
+ * Handles automatic JWT refresh on 401 with bounded single retry.
  */
-export async function uploadFileXhr<T>(endpoint: string, formData: FormData): Promise<T> {
+export async function uploadFileXhr<T>(
+  endpoint: string,
+  formData: FormData,
+  options: UploadOptions = {},
+): Promise<T> {
+  const { onProgress, retryCount = 0 } = options;
   const baseUrl = getBaseApiUrl();
   const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   const accessToken = await TokenStorage.getAccessToken();
@@ -209,23 +238,61 @@ export async function uploadFileXhr<T>(endpoint: string, formData: FormData): Pr
       xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
     }
 
-    xhr.onload = () => {
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = event.loaded / event.total;
+          onProgress(progress);
+        }
+      };
+    }
+
+    xhr.onload = async () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           resolve(JSON.parse(xhr.responseText));
         } catch {
           resolve(xhr.responseText as unknown as T);
         }
-      } else {
+        return;
+      }
+
+      // Handle 401 with token refresh & bounded single retry
+      if (xhr.status === 401 && retryCount < 1 && !endpoint.includes('/auth/')) {
         try {
-          const errData = JSON.parse(xhr.responseText);
-          const message = Array.isArray(errData?.message)
-            ? errData.message[0]
-            : errData?.message || 'File upload failed';
-          reject(new ApiError(message, xhr.status, errData));
-        } catch {
-          reject(new ApiError('File upload failed', xhr.status));
+          await refreshAuthTokens();
+          // Retry upload once with new access token
+          const retryResult = await uploadFileXhr<T>(endpoint, formData, {
+            onProgress,
+            retryCount: retryCount + 1,
+          });
+          resolve(retryResult);
+          return;
+        } catch (refreshErr) {
+          reject(
+            refreshErr instanceof ApiError
+              ? refreshErr
+              : new ApiError(AUTH_ERROR_MESSAGES.UNAUTHORIZED, 401, refreshErr),
+          );
+          return;
         }
+      }
+
+      try {
+        const errData = JSON.parse(xhr.responseText);
+        let message = Array.isArray(errData?.message)
+          ? errData.message[0]
+          : errData?.message || 'File upload failed';
+
+        if (xhr.status === 401) {
+          message = AUTH_ERROR_MESSAGES.UNAUTHORIZED;
+        }
+
+        reject(new ApiError(message, xhr.status, errData));
+      } catch {
+        const fallbackMsg =
+          xhr.status === 401 ? AUTH_ERROR_MESSAGES.UNAUTHORIZED : 'File upload failed';
+        reject(new ApiError(fallbackMsg, xhr.status));
       }
     };
 

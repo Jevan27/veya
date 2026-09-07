@@ -8,7 +8,7 @@ import { useOnboarding } from '../../features/onboarding/context/OnboardingConte
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { skipOnboarding, isSaving } = useOnboarding();
+  const { skipOnboarding } = useOnboarding();
 
   const handleGetStarted = () => {
     router.push('/(onboarding)/features');

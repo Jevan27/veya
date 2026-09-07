@@ -10,7 +10,7 @@ export interface UserDto {
   role?: string | null;
   avatarUrl?: string | null;
   phoneNumber?: string | null;
-  onboardingCompleted?: boolean;
+  onboardingCompleted: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
 }

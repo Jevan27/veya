@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
+import googleIcon from '../../../assets/google.png';
 
 interface SocialButtonProps {
   onPress?: () => void;
@@ -41,7 +42,7 @@ export const SocialButton: React.FC<SocialButtonProps> = ({
         <>
           <View style={styles.iconContainer}>
             <Image
-              source={require('../../../assets/google.png')}
+              source={googleIcon}
               style={styles.googleIcon}
               resizeMode="contain"
             />

@@ -11,11 +11,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     configService: ConfigService,
     private readonly usersService: UsersService,
   ) {
+    const accessSecret = configService.get<string>('jwt.accessSecret');
+    if (!accessSecret) {
+      throw new Error('JWT_ACCESS_SECRET is required to initialize JwtStrategy');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('jwt.accessSecret') || 'veya_default_access_secret_fallback',
+      secretOrKey: accessSecret,
     });
   }
 

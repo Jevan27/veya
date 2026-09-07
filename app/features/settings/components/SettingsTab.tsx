@@ -43,9 +43,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             try {
               setIsDeletingAccount(true);
               await onDeleteAccount();
-            } catch (err: any) {
+            } catch (err: unknown) {
               console.warn('[SettingsTab] Delete account error:', err);
-              Alert.alert('Error', err?.message || 'Failed to delete account. Please try again.');
+              const errorMessage = err instanceof Error ? err.message : 'Failed to delete account. Please try again.';
+              Alert.alert('Error', errorMessage);
             } finally {
               setIsDeletingAccount(false);
             }

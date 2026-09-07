@@ -20,6 +20,8 @@ import { StorageService } from '../storage/storage.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
 import { BusinessCardDto } from '@veya/shared';
+import { Throttle } from '@nestjs/throttler';
+import { MAX_IMAGE_SIZE_BYTES } from '../storage/file-validation.util';
 
 @ApiTags('cards')
 @ApiBearerAuth()
@@ -83,12 +85,13 @@ export class CardsController {
     return this.cardsService.remove(userId, id);
   }
 
+  @Throttle({ upload: { limit: 10, ttl: 60000 } })
   @Post('upload/logo')
-  @ApiOperation({ summary: 'Upload company logo image to Cloudflare R2 (Max 5MB)' })
+  @ApiOperation({ summary: 'Upload company logo image to Cloudflare R2 (Max 5MB, JPEG/PNG/WebP)' })
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(
     FileInterceptor('logo', {
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max limit
+      limits: { fileSize: MAX_IMAGE_SIZE_BYTES }, // 5 MB max limit
     }),
   )
   async uploadCompanyLogo(

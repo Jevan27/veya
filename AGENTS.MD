@@ -1015,3 +1015,26 @@ Shared code only when genuinely shared.
 Do not optimize for hypothetical scale.
 
 Build a clean foundation that can evolve as Veya gains real users and real requirements.
+
+---
+
+# 37. Workspace Skills System
+
+This repository maintains modular, specialized engineering runbooks in:
+
+```text
+.agents/skills/
+```
+
+When working on tasks matching any of the following domains, AI coding agents and developers must consult and follow the corresponding `SKILL.md`:
+
+* **`ui-design`** (`.agents/skills/ui-design/SKILL.md`): Color palettes, typography, spacing, border radii, shadows, bottom sheets, and mobile styling.
+* **`frontend-development`** (`.agents/skills/frontend-development/SKILL.md`): React Native + Expo Router architecture, API client integration, token storage, and hooks.
+* **`backend-development`** (`.agents/skills/backend-development/SKILL.md`): NestJS feature modules, thin controllers, services, DTO validation, and Cloudflare R2.
+* **`database`** (`.agents/skills/database/SKILL.md`): PostgreSQL with Prisma ORM, model naming, safe migrations, and queries.
+* **`code-review`** (`.agents/skills/code-review/SKILL.md`): PR/diff auditing rubric strictly enforcing `AGENTS.MD` principles.
+* **`testing`** (`.agents/skills/testing/SKILL.md`): NestJS module testing, React Native component testing, and verification commands.
+* **`debugging`** (`.agents/skills/debugging/SKILL.md`): Systematic 7-step debugging protocol and Veya-specific troubleshooting runbooks.
+* **`security`** (`.agents/skills/security/SKILL.md`): Argon2id hashing, JWT guards, ownership verification, R2 upload safety, and secrets protection.
+* **`documentation`** (`.agents/skills/documentation/SKILL.md`): Terminology standards ("Card"), OpenAPI Swagger docs, and doc maintenance.
+

@@ -1,5 +1,8 @@
 import { apiClient, uploadFileXhr } from './client';
 import {
+  CardDto,
+  CreateCardDto,
+  UpdateCardDto,
   BusinessCardDto,
   CreateBusinessCardDto,
   UpdateBusinessCardDto,
@@ -9,41 +12,41 @@ const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'svg', 'gif'];
 
 export const cardsApi = {
   /**
-   * Fetch all business cards belonging to the authenticated user
+   * Fetch all cards belonging to the authenticated user
    */
-  async getCards(): Promise<BusinessCardDto[]> {
-    return apiClient<BusinessCardDto[]>('/cards');
+  async getCards(): Promise<CardDto[]> {
+    return apiClient<CardDto[]>('/cards');
   },
 
   /**
    * Fetch a single card by ID
    */
-  async getCard(cardId: string): Promise<BusinessCardDto> {
-    return apiClient<BusinessCardDto>(`/cards/${cardId}`);
+  async getCard(cardId: string): Promise<CardDto> {
+    return apiClient<CardDto>(`/cards/${cardId}`);
   },
 
   /**
-   * Create a new digital business card record in the database
+   * Create a new digital card record in the database
    */
-  async createCard(payload: CreateBusinessCardDto): Promise<BusinessCardDto> {
-    return apiClient<BusinessCardDto>('/cards', {
+  async createCard(payload: CreateCardDto | CreateBusinessCardDto): Promise<CardDto> {
+    return apiClient<CardDto>('/cards', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
   },
 
   /**
-   * Update an existing business card record
+   * Update an existing card record
    */
-  async updateCard(cardId: string, payload: UpdateBusinessCardDto): Promise<BusinessCardDto> {
-    return apiClient<BusinessCardDto>(`/cards/${cardId}`, {
+  async updateCard(cardId: string, payload: UpdateCardDto | UpdateBusinessCardDto): Promise<CardDto> {
+    return apiClient<CardDto>(`/cards/${cardId}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     });
   },
 
   /**
-   * Delete a business card record
+   * Delete a card record
    */
   async deleteCard(cardId: string): Promise<{ success: boolean }> {
     return apiClient<{ success: boolean }>(`/cards/${cardId}`, {
@@ -92,3 +95,5 @@ export const cardsApi = {
     });
   },
 };
+
+export type { CardDto, CreateCardDto, UpdateCardDto, BusinessCardDto };

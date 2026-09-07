@@ -16,13 +16,19 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('jwt.accessSecret'),
-        signOptions: {
-          expiresIn: (configService.get<string>('jwt.accessExpiresIn') ||
-            '15m') as unknown as JwtSignOptions['expiresIn'],
-        },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const secret = configService.get<string>('jwt.accessSecret');
+        if (!secret) {
+          throw new Error('JWT_ACCESS_SECRET is required to initialize JwtModule');
+        }
+        return {
+          secret,
+          signOptions: {
+            expiresIn: (configService.get<string>('jwt.accessExpiresIn') ||
+              '15m') as unknown as JwtSignOptions['expiresIn'],
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

@@ -9,7 +9,7 @@ import { useOnboarding } from '../../features/onboarding/context/OnboardingConte
 
 export default function PhotoScreen() {
   const router = useRouter();
-  const { photoUri, setPhoto, setPhotoUri } = useOnboarding();
+  const { photoUri, setPhoto } = useOnboarding();
 
   const handleContinue = () => {
     router.push('/(onboarding)/preview');

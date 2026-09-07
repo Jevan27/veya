@@ -1,15 +1,8 @@
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-}
+import { UserDto, AuthTokens } from '@veya/shared';
+
+export { AuthTokens };
 
 export interface AuthResult {
-  user: {
-    id: string;
-    email: string;
-    name?: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  };
+  user: UserDto;
   tokens: AuthTokens;
 }
