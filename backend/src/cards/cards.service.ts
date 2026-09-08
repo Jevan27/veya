@@ -32,6 +32,7 @@ export class CardsService {
       companyLogoUrl: card.companyLogoUrl,
       primaryColor: card.primaryColor,
       cardBackgroundColor: card.cardBackgroundColor,
+      fontFamily: card.fontFamily ?? 'inter',
       isDefault: card.isDefault,
       createdAt: card.createdAt.toISOString(),
       updatedAt: card.updatedAt.toISOString(),
@@ -79,6 +80,7 @@ export class CardsService {
             companyLogoUrl: dto.companyLogoUrl,
             primaryColor: dto.primaryColor || '#111111',
             cardBackgroundColor: dto.cardBackgroundColor || '#FFFFFF',
+            fontFamily: dto.fontFamily || 'inter',
             isDefault: dto.isDefault ?? false,
           },
         });
@@ -147,6 +149,7 @@ export class CardsService {
             ...(dto.cardBackgroundColor !== undefined && {
               cardBackgroundColor: dto.cardBackgroundColor,
             }),
+            ...(dto.fontFamily !== undefined && { fontFamily: dto.fontFamily }),
             ...(dto.isDefault !== undefined && { isDefault: dto.isDefault }),
           },
         });

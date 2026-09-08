@@ -205,8 +205,10 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
                 <EditCardAppearanceTab
                   primaryColor={formState.primaryColor}
                   cardBackgroundColor={formState.cardBackgroundColor}
+                  fontFamily={formState.fontFamily}
                   onSelectPrimaryColor={setters.setPrimaryColor}
                   onSelectCardBackgroundColor={setters.setCardBackgroundColor}
+                  onSelectFontFamily={setters.setFontFamily}
                   previewUser={previewUser}
                   location={formState.location}
                   website={formState.website}

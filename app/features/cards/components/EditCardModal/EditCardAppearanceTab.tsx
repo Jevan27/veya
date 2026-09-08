@@ -3,13 +3,16 @@ import { View, Text, StyleSheet } from 'react-native';
 import { UserDto } from '@veya/shared';
 import { PRIMARY_COLORS, BACKGROUND_COLORS } from '../../utils/card-colors';
 import { CardColorPicker } from './CardColorPicker';
+import { CardFontPicker } from './CardFontPicker';
 import { VeyaCard } from '../VeyaCard/VeyaCard';
 
 interface EditCardAppearanceTabProps {
   primaryColor: string;
   cardBackgroundColor: string;
+  fontFamily: string;
   onSelectPrimaryColor: (hex: string) => void;
   onSelectCardBackgroundColor: (hex: string) => void;
+  onSelectFontFamily: (fontId: string) => void;
   previewUser: UserDto;
   location: string;
   website: string;
@@ -20,8 +23,10 @@ interface EditCardAppearanceTabProps {
 export const EditCardAppearanceTab: React.FC<EditCardAppearanceTabProps> = ({
   primaryColor,
   cardBackgroundColor,
+  fontFamily,
   onSelectPrimaryColor,
   onSelectCardBackgroundColor,
+  onSelectFontFamily,
   previewUser,
   location,
   website,
@@ -30,6 +35,12 @@ export const EditCardAppearanceTab: React.FC<EditCardAppearanceTabProps> = ({
 }) => {
   return (
     <>
+      {/* Typography Font Picker */}
+      <CardFontPicker
+        selectedFontId={fontFamily}
+        onSelectFont={onSelectFontFamily}
+      />
+
       {/* Primary Accent Color */}
       <CardColorPicker
         title="Primary Accent Color"
@@ -66,6 +77,7 @@ export const EditCardAppearanceTab: React.FC<EditCardAppearanceTabProps> = ({
           companyLogoUrl={companyLogoUrl}
           primaryColor={primaryColor}
           cardBackgroundColor={cardBackgroundColor}
+          fontFamily={fontFamily}
           isPreviewMode
         />
       </View>

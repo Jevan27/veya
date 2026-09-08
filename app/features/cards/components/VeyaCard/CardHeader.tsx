@@ -11,6 +11,7 @@ interface CardHeaderProps {
   sloganLines?: string[] | null;
   primaryColor?: string;
   isDarkBg: boolean;
+  fontFamily?: string;
 }
 
 export const CardHeader: React.FC<CardHeaderProps> = ({
@@ -23,7 +24,10 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
   sloganLines,
   primaryColor = '#111111',
   isDarkBg,
+  fontFamily,
 }) => {
+  const customFont = fontFamily ? { fontFamily } : undefined;
+
   return (
     <View style={styles.upperSection}>
       {/* Avatar (Squircle / Rounded Rectangle) */}
@@ -47,7 +51,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
               },
             ]}
           >
-            <Text style={[styles.avatarInitials, { color: primaryColor }]}>{initials}</Text>
+            <Text style={[styles.avatarInitials, { color: primaryColor }, customFont]}>{initials}</Text>
           </View>
         )}
       </View>
@@ -58,6 +62,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
           style={[
             styles.nameText,
             { color: isDarkBg ? '#FFFFFF' : '#0F172A' },
+            customFont,
           ]}
           numberOfLines={1}
         >
@@ -67,6 +72,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
           style={[
             styles.roleText,
             { color: isDarkBg ? '#94A3B8' : '#64748B' },
+            customFont,
           ]}
           numberOfLines={1}
         >
@@ -90,6 +96,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
             style={[
               styles.companyName,
               { color: isDarkBg ? '#F8FAFC' : '#0F172A' },
+              customFont,
             ]}
             numberOfLines={1}
           >
@@ -107,6 +114,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
               style={[
                 styles.sloganLine,
                 { color: isDarkBg ? '#F1F5F9' : '#0F172A' },
+                customFont,
               ]}
             >
               {line.toUpperCase()}

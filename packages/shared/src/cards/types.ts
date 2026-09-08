@@ -16,6 +16,7 @@ export interface CardDto {
   companyLogoUrl?: string | null;
   primaryColor?: string | null;
   cardBackgroundColor?: string | null;
+  fontFamily?: string | null;
   isDefault?: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
@@ -39,6 +40,7 @@ export interface CreateCardDto {
   companyLogoUrl?: string | null;
   primaryColor?: string;
   cardBackgroundColor?: string;
+  fontFamily?: string;
   isDefault?: boolean;
 }
 
@@ -60,6 +62,7 @@ export interface UpdateCardDto {
   companyLogoUrl?: string | null;
   primaryColor?: string;
   cardBackgroundColor?: string;
+  fontFamily?: string;
   isDefault?: boolean;
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,13 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { VeyaCard } from './VeyaCard/VeyaCard';
+import { CardSkeleton } from './VeyaCard/CardSkeleton';
 import { EditCardModal } from './EditCardModal/EditCardModal';
 import { EditCardData } from '../types/card-form.types';
 import { QrScannerIcon } from '../../../components/icons/QrScannerIcon';
-import { UserDto, CardDto } from '@veya/shared';
-import { usersApi } from '../../../services/api/users.api';
-import { cardsApi } from '../../../services/api/cards.api';
+import { UserDto } from '@veya/shared';
+import { useCard } from '../hooks/useCard';
+import { isDarkColor } from '../utils/card-colors';
 
 interface CardsTabProps {
   user: UserDto | null;
@@ -27,186 +28,48 @@ export const CardsTab: React.FC<CardsTabProps> = ({
   user,
   onOpenScanner,
   onEditCard,
-  onUserUpdate,
-  slogan = 'PEOPLE\nIDEAS\nOPPORTUNITIES\nCONNECTED',
 }) => {
-  const cardUrl = `https://veya.app/card/${user?.id || 'demo'}`;
+  const { cardData, status, saveCard } = useCard();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-  const initialSloganString = typeof slogan === 'string'
-    ? slogan
-    : Array.isArray(slogan)
-    ? slogan.join('\n')
-    : 'PEOPLE\nIDEAS\nOPPORTUNITIES\nCONNECTED';
+  const cardUrl = `https://veya.app/card/${user?.id || 'demo'}`;
 
-  const [currentCardId, setCurrentCardId] = useState<string | null>(null);
-  const [, setUserCards] = useState<CardDto[]>([]);
-
-  const [cardData, setCardData] = useState<EditCardData>({
-    name: user?.name || 'Jevan Campillos',
-    role: user?.role || 'Full-Stack Developer',
-    company: user?.company || 'Veya',
-    slogan: initialSloganString,
-    phoneNumber: user?.phoneNumber || '+63 912 345 6789',
-    email: user?.email || 'jevan@veya.app',
-    location: 'Caloocan, Metro Manila, Philippines',
-    website: 'https://www.veya.app',
-    avatarUrl: user?.avatarUrl || null,
-    companyLogoUrl: null,
-    primaryColor: '#111111',
-    cardBackgroundColor: '#FFFFFF',
-  });
-
-  // Fetch user's business cards from backend database
-  useEffect(() => {
-    let isMounted = true;
-    async function loadCards() {
-      if (!user) return;
-      try {
-        const cards = await cardsApi.getCards();
-        if (isMounted && cards && cards.length > 0) {
-          setUserCards(cards);
-          const primaryCard = cards.find((c) => c.isDefault) || cards[0];
-          setCurrentCardId(primaryCard.id);
-          setCardData({
-            name: primaryCard.name || user.name || '',
-            role: primaryCard.role || user.role || '',
-            company: primaryCard.company || user.company || '',
-            slogan: primaryCard.slogan || initialSloganString,
-            phoneNumber: primaryCard.phoneNumber || user.phoneNumber || '',
-            email: primaryCard.email || user.email || '',
-            location: primaryCard.location || 'Caloocan, Metro Manila, Philippines',
-            website: primaryCard.website || 'https://www.veya.app',
-            avatarUrl: primaryCard.avatarUrl ?? user.avatarUrl ?? null,
-            companyLogoUrl: primaryCard.companyLogoUrl ?? null,
-            primaryColor: primaryCard.primaryColor || '#111111',
-            cardBackgroundColor: primaryCard.cardBackgroundColor || '#FFFFFF',
-          });
-        }
-      } catch (err) {
-        console.warn('[CardsTab] Failed to fetch cards from database:', err);
-      }
-    }
-    loadCards();
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
-
-  const handleOpenEdit = () => {
+  const handleOpenEdit = useCallback(() => {
     setIsEditModalVisible(true);
     if (onEditCard) {
       onEditCard();
     }
-  };
+  }, [onEditCard]);
 
-  const handleSaveCard = async (updated: EditCardData) => {
-    let finalAvatarUrl = updated.avatarUrl;
-    let finalCompanyLogoUrl = updated.companyLogoUrl;
+  const handleSaveCard = useCallback(
+    async (updated: EditCardData) => {
+      await saveCard(updated);
+    },
+    [saveCard]
+  );
 
-    // 1. Upload company logo to Cloudflare R2 if a new local image was selected
-    if (updated.companyLogoUrl && updated.companyLogoUrl.startsWith('file:')) {
-      try {
-        const logoRes = await cardsApi.uploadCompanyLogo(updated.companyLogoUrl);
-        finalCompanyLogoUrl = logoRes.companyLogoUrl;
-      } catch (logoErr) {
-        console.warn('[CardsTab] Company logo upload error:', logoErr);
-      }
-    }
-
-    // 2. Upload avatar to Cloudflare R2 if a new local image was selected
-    if (updated.avatarUrl && updated.avatarUrl.startsWith('file:')) {
-      try {
-        const uploadRes = await usersApi.uploadProfilePhoto(updated.avatarUrl);
-        finalAvatarUrl = uploadRes.avatarUrl;
-      } catch (uploadErr) {
-        console.warn('[CardsTab] Avatar upload error:', uploadErr);
-      }
-    }
-
-    const mergedData: EditCardData = {
-      ...updated,
-      avatarUrl: finalAvatarUrl,
-      companyLogoUrl: finalCompanyLogoUrl,
+  // Compute effective user representation for VeyaCard
+  const effectiveUser = useMemo<UserDto | null>(() => {
+    if (!cardData) return null;
+    return {
+      id: user?.id || 'demo',
+      email: cardData.email,
+      name: cardData.name,
+      role: cardData.role,
+      company: cardData.company,
+      phoneNumber: cardData.phoneNumber,
+      avatarUrl: cardData.avatarUrl,
+      onboardingCompleted: true,
+      createdAt: user?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
+  }, [cardData, user]);
 
-    setCardData(mergedData);
+  // Determine if theme of the customized card is dark for skeleton match
+  const isDarkCard = isDarkColor(cardData?.cardBackgroundColor);
 
-    // 3. Save to database table `business_cards`
-    if (user) {
-      try {
-        if (currentCardId) {
-          const updatedCard = await cardsApi.updateCard(currentCardId, {
-            name: mergedData.name,
-            role: mergedData.role,
-            company: mergedData.company,
-            slogan: mergedData.slogan,
-            phoneNumber: mergedData.phoneNumber,
-            email: mergedData.email,
-            location: mergedData.location,
-            website: mergedData.website,
-            avatarUrl: mergedData.avatarUrl,
-            companyLogoUrl: mergedData.companyLogoUrl,
-            primaryColor: mergedData.primaryColor,
-            cardBackgroundColor: mergedData.cardBackgroundColor,
-          });
-          setUserCards((prev) =>
-            prev.map((c) => (c.id === currentCardId ? updatedCard : c)),
-          );
-        } else {
-          const newCard = await cardsApi.createCard({
-            name: mergedData.name,
-            role: mergedData.role,
-            company: mergedData.company,
-            slogan: mergedData.slogan,
-            phoneNumber: mergedData.phoneNumber,
-            email: mergedData.email,
-            location: mergedData.location,
-            website: mergedData.website,
-            avatarUrl: mergedData.avatarUrl,
-            companyLogoUrl: mergedData.companyLogoUrl,
-            primaryColor: mergedData.primaryColor,
-            cardBackgroundColor: mergedData.cardBackgroundColor,
-            isDefault: true,
-          });
-          setCurrentCardId(newCard.id);
-          setUserCards((prev) => [newCard, ...prev]);
-        }
-
-        // 4. Also update User profile record for consistency
-        const updatedProfile = await usersApi.updateProfile({
-          name: mergedData.name,
-          role: mergedData.role,
-          company: mergedData.company,
-          phoneNumber: mergedData.phoneNumber,
-          avatarUrl: finalAvatarUrl || undefined,
-        });
-
-        if (onUserUpdate) {
-          onUserUpdate({
-            ...user,
-            ...updatedProfile,
-            avatarUrl: finalAvatarUrl || updatedProfile.avatarUrl,
-          });
-        }
-      } catch (apiErr) {
-        console.warn('[CardsTab] Failed to persist card to database:', apiErr);
-      }
-    }
-  };
-
-  const effectiveUser: UserDto = {
-    id: user?.id || 'demo',
-    email: cardData.email,
-    name: cardData.name,
-    role: cardData.role,
-    company: cardData.company,
-    phoneNumber: cardData.phoneNumber,
-    avatarUrl: cardData.avatarUrl,
-    onboardingCompleted: true,
-    createdAt: user?.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  // Render skeleton whenever card data is not yet available in cache
+  const shouldShowSkeleton = !cardData || status === 'loading';
 
   return (
     <>
@@ -234,27 +97,34 @@ export const CardsTab: React.FC<CardsTabProps> = ({
 
         {/* ──────────────── PRIMARY LANDSCAPE DIGITAL CARD ──────────────── */}
         <View style={styles.cardContainer}>
-          <VeyaCard
-            user={effectiveUser}
-            cardUrl={cardUrl}
-            address={cardData.location}
-            website={cardData.website}
-            slogan={cardData.slogan}
-            companyLogoUrl={cardData.companyLogoUrl}
-            primaryColor={cardData.primaryColor}
-            cardBackgroundColor={cardData.cardBackgroundColor}
-            onEdit={handleOpenEdit}
-          />
+          {shouldShowSkeleton ? (
+            <CardSkeleton isDarkTheme={isDarkCard} />
+          ) : (
+            <VeyaCard
+              user={effectiveUser}
+              cardUrl={cardUrl}
+              address={cardData.location}
+              website={cardData.website}
+              slogan={cardData.slogan}
+              companyLogoUrl={cardData.companyLogoUrl}
+              primaryColor={cardData.primaryColor}
+              cardBackgroundColor={cardData.cardBackgroundColor}
+              fontFamily={cardData.fontFamily}
+              onEdit={handleOpenEdit}
+            />
+          )}
         </View>
       </ScrollView>
 
       {/* ──────────────── EDIT CARD BOTTOM SHEET MODAL ──────────────── */}
-      <EditCardModal
-        visible={isEditModalVisible}
-        onClose={() => setIsEditModalVisible(false)}
-        cardData={cardData}
-        onSave={handleSaveCard}
-      />
+      {cardData && (
+        <EditCardModal
+          visible={isEditModalVisible}
+          onClose={() => setIsEditModalVisible(false)}
+          cardData={cardData}
+          onSave={handleSaveCard}
+        />
+      )}
     </>
   );
 };

@@ -48,20 +48,22 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.body}>
-        {activeTab === 'cards' ? (
+        <View style={[styles.tabContent, activeTab !== 'cards' && styles.tabHidden]}>
           <CardsTab
             user={user}
             onOpenScanner={() => setIsScannerVisible(true)}
             onUserUpdate={updateUser}
           />
-        ) : (
+        </View>
+
+        <View style={[styles.tabContent, activeTab !== 'settings' && styles.tabHidden]}>
           <SettingsTab
             user={user}
             onUserUpdate={updateUser}
             onSignOut={handleSignOut}
             onDeleteAccount={handleDeleteAccount}
           />
-        )}
+        </View>
       </View>
 
       {/* Bottom Navigation Bar */}
@@ -93,6 +95,12 @@ const styles = StyleSheet.create({
   },
   body: {
     flex: 1,
+  },
+  tabContent: {
+    flex: 1,
+  },
+  tabHidden: {
+    display: 'none',
   },
   brand: {
     fontSize: 28,

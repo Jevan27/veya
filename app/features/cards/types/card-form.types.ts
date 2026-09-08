@@ -11,6 +11,7 @@ export interface EditCardData {
   companyLogoUrl: string | null;
   primaryColor: string;
   cardBackgroundColor: string;
+  fontFamily: string;
 }
 
 /**

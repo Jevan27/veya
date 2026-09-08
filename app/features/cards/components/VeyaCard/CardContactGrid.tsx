@@ -9,6 +9,7 @@ interface CardContactGridProps {
   website: string;
   primaryColor?: string;
   isDarkBg: boolean;
+  fontFamily?: string;
 }
 
 export const CardContactGrid: React.FC<CardContactGridProps> = ({
@@ -18,7 +19,10 @@ export const CardContactGrid: React.FC<CardContactGridProps> = ({
   website,
   primaryColor = '#111111',
   isDarkBg,
+  fontFamily,
 }) => {
+  const customFont = fontFamily ? { fontFamily } : undefined;
+
   return (
     <View style={styles.lowerSection}>
       {/* Row 1: Phone & Email */}
@@ -37,6 +41,7 @@ export const CardContactGrid: React.FC<CardContactGridProps> = ({
             style={[
               styles.contactText,
               { color: isDarkBg ? '#E2E8F0' : '#334155' },
+              customFont,
             ]}
             numberOfLines={1}
           >
@@ -58,6 +63,7 @@ export const CardContactGrid: React.FC<CardContactGridProps> = ({
             style={[
               styles.contactText,
               { color: isDarkBg ? '#E2E8F0' : '#334155' },
+              customFont,
             ]}
             numberOfLines={1}
           >
@@ -82,6 +88,7 @@ export const CardContactGrid: React.FC<CardContactGridProps> = ({
             style={[
               styles.contactText,
               { color: isDarkBg ? '#E2E8F0' : '#334155' },
+              customFont,
             ]}
             numberOfLines={2}
           >
@@ -103,6 +110,7 @@ export const CardContactGrid: React.FC<CardContactGridProps> = ({
             style={[
               styles.contactText,
               { color: isDarkBg ? '#E2E8F0' : '#334155' },
+              customFont,
             ]}
             numberOfLines={1}
           >

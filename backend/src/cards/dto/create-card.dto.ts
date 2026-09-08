@@ -61,6 +61,11 @@ export class CreateCardDto {
   @IsString()
   cardBackgroundColor?: string;
 
+  @ApiPropertyOptional({ description: 'Curated font family identifier (e.g. inter, playfair-display, poppins, montserrat, lora)' })
+  @IsOptional()
+  @IsString()
+  fontFamily?: string;
+
   @ApiPropertyOptional({ description: 'Whether this card is the default/primary card' })
   @IsOptional()
   @IsBoolean()

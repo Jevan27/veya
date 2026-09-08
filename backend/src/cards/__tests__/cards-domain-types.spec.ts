@@ -52,6 +52,7 @@ describe('Cards Domain Types & Normalization', () => {
         companyLogoUrl: 'https://cdn.veya.app/logos/veya.png',
         primaryColor: '#111111',
         cardBackgroundColor: '#FFFFFF',
+        fontFamily: 'inter',
         isDefault: true,
         createdAt: new Date('2026-03-01T12:00:00.000Z'),
         updatedAt: new Date('2026-03-02T15:30:00.000Z'),
@@ -73,6 +74,7 @@ describe('Cards Domain Types & Normalization', () => {
       expect(dto.companyLogoUrl).toBe('https://cdn.veya.app/logos/veya.png');
       expect(dto.primaryColor).toBe('#111111');
       expect(dto.cardBackgroundColor).toBe('#FFFFFF');
+      expect(dto.fontFamily).toBe('inter');
       expect(dto.isDefault).toBe(true);
       expect(dto.createdAt).toBe('2026-03-01T12:00:00.000Z');
       expect(dto.updatedAt).toBe('2026-03-02T15:30:00.000Z');
@@ -80,6 +82,7 @@ describe('Cards Domain Types & Normalization', () => {
       // Verify backwards-compatibility assignment to BusinessCardDto
       const legacyDto: BusinessCardDto = dto;
       expect(legacyDto.name).toBe('Jevan Campillos');
+      expect(legacyDto.fontFamily).toBe('inter');
     });
 
     it('should map null and undefined fields safely', () => {
@@ -98,6 +101,7 @@ describe('Cards Domain Types & Normalization', () => {
         companyLogoUrl: null,
         primaryColor: null,
         cardBackgroundColor: null,
+        fontFamily: null,
         isDefault: false,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -144,6 +148,15 @@ describe('Cards Domain Types & Normalization', () => {
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0].property).toBe('name');
     });
+
+    it('should validate optional fontFamily field', async () => {
+      const dto = new CreateCardDto();
+      dto.name = 'Valid Name';
+      dto.fontFamily = 'playfair-display';
+
+      const errors = await validate(dto);
+      expect(errors.length).toBe(0);
+    });
   });
 
   describe('Card Color Luminance (isDarkColor)', () => {
@@ -167,6 +180,60 @@ describe('Cards Domain Types & Normalization', () => {
       expect(isDarkColor(undefined)).toBe(false);
       expect(isDarkColor('#FFF')).toBe(false); // short hex not matching 6 chars
       expect(isDarkColor('invalid')).toBe(false);
+    });
+  });
+
+  describe('Font Family Fallback & Normalization', () => {
+    it('should fallback to inter if entity has undefined or null fontFamily', () => {
+      const cardWithoutFont: BusinessCard = {
+        id: 'card-no-font',
+        userId: 'user-1',
+        name: 'No Font User',
+        role: 'Designer',
+        company: 'Veya',
+        slogan: null,
+        phoneNumber: null,
+        email: null,
+        location: null,
+        website: null,
+        avatarUrl: null,
+        companyLogoUrl: null,
+        primaryColor: '#111111',
+        cardBackgroundColor: '#FFFFFF',
+        fontFamily: null,
+        isDefault: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const dto = cardsService.toCardDto(cardWithoutFont);
+      expect(dto.fontFamily).toBe('inter');
+    });
+
+    it('should preserve explicit custom font families', () => {
+      const cardWithCustomFont = {
+        id: 'card-custom-font',
+        userId: 'user-1',
+        name: 'Custom Font User',
+        role: 'Designer',
+        company: 'Veya',
+        slogan: null,
+        phoneNumber: null,
+        email: null,
+        location: null,
+        website: null,
+        avatarUrl: null,
+        companyLogoUrl: null,
+        primaryColor: '#111111',
+        cardBackgroundColor: '#FFFFFF',
+        fontFamily: 'playfair-display',
+        isDefault: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as unknown as BusinessCard;
+
+      const dto = cardsService.toCardDto(cardWithCustomFont);
+      expect(dto.fontFamily).toBe('playfair-display');
     });
   });
 });

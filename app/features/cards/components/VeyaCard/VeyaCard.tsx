@@ -16,6 +16,7 @@ import { CardWaveAccent } from './CardWaveAccent';
 import { CardHeader } from './CardHeader';
 import { CardContactGrid } from './CardContactGrid';
 import { CardModal } from './CardModal';
+import { useCardFont } from '../../fonts/useCardFont';
 
 export interface VeyaCardProps {
   user: UserDto | null;
@@ -37,6 +38,8 @@ export interface VeyaCardProps {
   primaryColor?: string;
   /** Optional card background color (defaults to #FFFFFF) */
   cardBackgroundColor?: string;
+  /** Optional custom font family identifier (e.g. 'inter', 'playfair-display', 'poppins', etc.) */
+  fontFamily?: string | null;
   /** If true, disables modal and scales down for compact preview */
   isPreviewMode?: boolean;
 }
@@ -52,10 +55,14 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
   companyLogoUrl,
   primaryColor = '#111111',
   cardBackgroundColor = '#FFFFFF',
+  fontFamily: customFontFamily,
   isPreviewMode = false,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+
+  // Dynamically resolve custom card typography font
+  const { fontFamily: activeFontFamily } = useCardFont(customFontFamily);
 
   // Press animation value
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -250,6 +257,7 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
               sloganLines={sloganLines}
               primaryColor={primaryColor}
               isDarkBg={isDarkBg}
+              fontFamily={activeFontFamily}
             />
 
             {/* Subtle Horizontal Divider */}
@@ -268,6 +276,7 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
               website={website}
               primaryColor={primaryColor}
               isDarkBg={isDarkBg}
+              fontFamily={activeFontFamily}
             />
           </Pressable>
         </View>

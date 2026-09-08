@@ -27,6 +27,7 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(cardData.companyLogoUrl);
   const [primaryColor, setPrimaryColor] = useState(cardData.primaryColor || '#111111');
   const [cardBackgroundColor, setCardBackgroundColor] = useState(cardData.cardBackgroundColor || '#FFFFFF');
+  const [fontFamily, setFontFamily] = useState(cardData.fontFamily || 'inter');
   const [activeTab, setActiveTab] = useState<EditCardTab>('personal');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -46,6 +47,7 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
       setCompanyLogoUrl(cardData.companyLogoUrl);
       setPrimaryColor(cardData.primaryColor || '#111111');
       setCardBackgroundColor(cardData.cardBackgroundColor || '#FFFFFF');
+      setFontFamily(cardData.fontFamily || 'inter');
     }
   }, [visible, cardData]);
 
@@ -138,6 +140,7 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
         companyLogoUrl,
         primaryColor,
         cardBackgroundColor,
+        fontFamily,
       });
       onSuccess();
     } catch (err: unknown) {
@@ -159,6 +162,7 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
     companyLogoUrl,
     primaryColor,
     cardBackgroundColor,
+    fontFamily,
     onSave,
     onSuccess,
   ]);
@@ -194,6 +198,7 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
       companyLogoUrl,
       primaryColor,
       cardBackgroundColor,
+      fontFamily,
     },
     setters: {
       setName,
@@ -208,6 +213,7 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
       setCompanyLogoUrl,
       setPrimaryColor,
       setCardBackgroundColor,
+      setFontFamily,
     },
     activeTab,
     setActiveTab,
