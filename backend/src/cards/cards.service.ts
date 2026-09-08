@@ -58,7 +58,14 @@ export class CardsService {
   async create(userId: string, dto: CreateCardDto): Promise<BusinessCard> {
     try {
       return await this.prisma.$transaction(async (tx) => {
-        if (dto.isDefault) {
+        // If isDefault is not explicitly provided, default to true only if user has 0 cards
+        let isDefault = dto.isDefault;
+        if (isDefault === undefined) {
+          const existingCount = await tx.businessCard.count({ where: { userId } });
+          isDefault = existingCount === 0;
+        }
+
+        if (isDefault) {
           await tx.businessCard.updateMany({
             where: { userId, isDefault: true },
             data: { isDefault: false },
@@ -81,7 +88,7 @@ export class CardsService {
             primaryColor: dto.primaryColor || '#111111',
             cardBackgroundColor: dto.cardBackgroundColor || '#FFFFFF',
             fontFamily: dto.fontFamily || 'inter',
-            isDefault: dto.isDefault ?? false,
+            isDefault,
           },
         });
       });
@@ -170,12 +177,27 @@ export class CardsService {
    */
   async remove(userId: string, cardId: string): Promise<{ success: boolean }> {
     // Enforce ownership check before deletion
-    await this.findOne(userId, cardId);
+    const existing = await this.findOne(userId, cardId);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.businessCard.delete({
         where: { id: cardId },
       });
+
+      // If deleted card was the default card, promote the user's newest remaining card
+      if (existing.isDefault) {
+        const nextCard = await tx.businessCard.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (nextCard) {
+          await tx.businessCard.update({
+            where: { id: nextCard.id },
+            data: { isDefault: true },
+          });
+        }
+      }
     });
 
     return { success: true };

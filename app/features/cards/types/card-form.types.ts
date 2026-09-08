@@ -24,6 +24,7 @@ export interface EditCardModalProps {
   onClose: () => void;
   cardData: EditCardData;
   onSave: (updatedData: EditCardData) => Promise<void> | void;
+  mode?: 'edit' | 'create';
 }
 
 /**

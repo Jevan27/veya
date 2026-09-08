@@ -93,6 +93,28 @@ export class StorageService {
   }
 
   /**
+   * Uploads an asset (avatar or logo) strictly isolated to a specific card:
+   * Path: users/{userId}/cards/{cardId}/{assetType}/{assetType}-{timestamp}-{random}.{ext}
+   * Enforces card-level asset isolation to prevent cross-card overwriting.
+   */
+  async uploadCardAsset(params: {
+    userId: string;
+    cardId: string;
+    assetType: 'avatar' | 'logo';
+    buffer: Buffer;
+    originalName?: string;
+    mimeType?: string;
+  }): Promise<string> {
+    const { userId, cardId, assetType, buffer, originalName, mimeType } = params;
+    const { detectedMime, extension } = validateImageBuffer(buffer, originalName, mimeType);
+    const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, '');
+    const safeCardId = cardId.replace(/[^a-zA-Z0-9_-]/g, '') || 'draft';
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const key = `users/${safeUserId}/cards/${safeCardId}/${assetType}/${assetType}-${Date.now()}-${randomSuffix}.${extension}`;
+    return this.uploadBuffer(key, buffer, detectedMime);
+  }
+
+  /**
    * Uploads a file organized by user and purpose:
    * Format: users -> {userId} -> {purpose} -> {fileName}
    */

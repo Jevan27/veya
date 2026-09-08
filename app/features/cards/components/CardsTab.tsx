@@ -9,9 +9,12 @@ import {
 import { VeyaCard } from './VeyaCard/VeyaCard';
 import { CardSkeleton } from './VeyaCard/CardSkeleton';
 import { EditCardModal } from './EditCardModal/EditCardModal';
+import { CardSelector } from './CardSelector';
+import { AddCardButton } from './AddCardButton';
 import { EditCardData } from '../types/card-form.types';
 import { QrScannerIcon } from '../../../components/icons/QrScannerIcon';
 import { UserDto } from '@veya/shared';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCard } from '../hooks/useCard';
 import { isDarkColor } from '../utils/card-colors';
 
@@ -24,28 +27,71 @@ interface CardsTabProps {
   slogan?: string | string[] | null;
 }
 
+const DEFAULT_SLOGAN = 'PEOPLE\nIDEAS\nOPPORTUNITIES\nCONNECTED';
+const DEFAULT_LOCATION = 'Caloocan, Metro Manila, Philippines';
+const DEFAULT_WEBSITE = 'https://www.veya.app';
+
 export const CardsTab: React.FC<CardsTabProps> = ({
   user,
   onOpenScanner,
   onEditCard,
 }) => {
-  const { cardData, status, saveCard } = useCard();
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const {
+    cards,
+    activeCardId,
+    card,
+    cardData,
+    status,
+    setActiveCardId,
+    createCard,
+    saveCard,
+  } = useCard();
 
-  const cardUrl = `https://veya.app/card/${user?.id || 'demo'}`;
+  const [modalMode, setModalMode] = useState<'edit' | 'create'>('edit');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const cardUrl = `https://veya.app/card/${card?.id || user?.id || 'demo'}`;
 
   const handleOpenEdit = useCallback(() => {
-    setIsEditModalVisible(true);
+    setModalMode('edit');
+    setIsModalVisible(true);
     if (onEditCard) {
       onEditCard();
     }
   }, [onEditCard]);
 
-  const handleSaveCard = useCallback(
+  const handleOpenCreate = useCallback(() => {
+    setModalMode('create');
+    setIsModalVisible(true);
+  }, []);
+
+  const newCardDefaultData = useMemo<EditCardData>(() => {
+    return {
+      name: user?.name || '',
+      role: '',
+      company: '',
+      slogan: DEFAULT_SLOGAN,
+      phoneNumber: '',
+      email: user?.email || '',
+      location: DEFAULT_LOCATION,
+      website: DEFAULT_WEBSITE,
+      avatarUrl: null, // Fully independent
+      companyLogoUrl: null, // Fully independent
+      primaryColor: '#111111',
+      cardBackgroundColor: '#FFFFFF',
+      fontFamily: 'inter',
+    };
+  }, [user]);
+
+  const handleSaveModal = useCallback(
     async (updated: EditCardData) => {
-      await saveCard(updated);
+      if (modalMode === 'create') {
+        await createCard(updated);
+      } else {
+        await saveCard(updated);
+      }
     },
-    [saveCard]
+    [modalMode, createCard, saveCard]
   );
 
   // Compute effective user representation for VeyaCard
@@ -65,6 +111,9 @@ export const CardsTab: React.FC<CardsTabProps> = ({
     };
   }, [cardData, user]);
 
+  const insets = useSafeAreaInsets();
+  const bottomScrollPadding = 58 + Math.max(insets.bottom, 12) + 56 + 24;
+
   // Determine if theme of the customized card is dark for skeleton match
   const isDarkCard = isDarkColor(cardData?.cardBackgroundColor);
 
@@ -72,10 +121,10 @@ export const CardsTab: React.FC<CardsTabProps> = ({
   const shouldShowSkeleton = !cardData || status === 'loading';
 
   return (
-    <>
+    <View style={styles.screenWrapper}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: bottomScrollPadding }]}
         showsVerticalScrollIndicator={false}
       >
         {/* ──────────────── TOP NAVIGATION BAR ──────────────── */}
@@ -94,6 +143,13 @@ export const CardsTab: React.FC<CardsTabProps> = ({
             <QrScannerIcon size={21} color="#0F172A" strokeWidth={2.4} />
           </TouchableOpacity>
         </View>
+
+        {/* ──────────────── CARD SELECTOR (WHEN USER HAS >1 CARDS) ──────────────── */}
+        <CardSelector
+          cards={cards}
+          activeCardId={activeCardId}
+          onSelectCard={setActiveCardId}
+        />
 
         {/* ──────────────── PRIMARY LANDSCAPE DIGITAL CARD ──────────────── */}
         <View style={styles.cardContainer}>
@@ -116,28 +172,33 @@ export const CardsTab: React.FC<CardsTabProps> = ({
         </View>
       </ScrollView>
 
-      {/* ──────────────── EDIT CARD BOTTOM SHEET MODAL ──────────────── */}
-      {cardData && (
-        <EditCardModal
-          visible={isEditModalVisible}
-          onClose={() => setIsEditModalVisible(false)}
-          cardData={cardData}
-          onSave={handleSaveCard}
-        />
-      )}
-    </>
+      {/* ──────────────── FLOATING '+' ADD CARD BUTTON ──────────────── */}
+      <AddCardButton onPress={handleOpenCreate} />
+
+      {/* ──────────────── EDIT / CREATE CARD BOTTOM SHEET MODAL ──────────────── */}
+      <EditCardModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        cardData={modalMode === 'create' ? newCardDefaultData : (cardData || newCardDefaultData)}
+        onSave={handleSaveModal}
+        mode={modalMode}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  screenWrapper: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  container: {
+    flex: 1,
   },
   contentContainer: {
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 110,
+    paddingBottom: 120,
     maxWidth: 480,
     width: '100%',
     alignSelf: 'center',

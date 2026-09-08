@@ -55,9 +55,32 @@ export const cardsApi = {
   },
 
   /**
-   * Upload company logo image to Cloudflare R2 (Max 5MB limit, image formats only)
+   * Upload card profile photo to Cloudflare R2 isolated to a specific card
    */
-  async uploadCompanyLogo(localUri: string): Promise<{ companyLogoUrl: string }> {
+  async uploadCardAvatar(cardId: string, localUri: string): Promise<{ avatarUrl: string }> {
+    const filename = localUri.split('/').pop() || 'avatar.png';
+    const ext = (filename.split('.').pop() || 'png').toLowerCase();
+
+    if (!ALLOWED_IMAGE_EXTENSIONS.includes(ext)) {
+      throw new Error(`Only image files (${ALLOWED_IMAGE_EXTENSIONS.join(', ')}) are allowed`);
+    }
+
+    const type = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+    const formData = new FormData();
+    formData.append('photo', {
+      uri: localUri,
+      name: filename,
+      type,
+    } as unknown as Blob);
+
+    const endpoint = cardId ? `/cards/${cardId}/upload/avatar` : '/cards/upload/avatar';
+    return uploadFileXhr<{ avatarUrl: string }>(endpoint, formData);
+  },
+
+  /**
+   * Upload company logo image to Cloudflare R2 isolated to a specific card
+   */
+  async uploadCardLogo(cardId: string, localUri: string): Promise<{ companyLogoUrl: string }> {
     const filename = localUri.split('/').pop() || 'logo.png';
     const ext = (filename.split('.').pop() || 'png').toLowerCase();
 
@@ -66,7 +89,6 @@ export const cardsApi = {
     }
 
     const type = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-
     const formData = new FormData();
     formData.append('logo', {
       uri: localUri,
@@ -74,7 +96,15 @@ export const cardsApi = {
       type,
     } as unknown as Blob);
 
-    return uploadFileXhr<{ companyLogoUrl: string }>('/cards/upload/logo', formData);
+    const endpoint = cardId ? `/cards/${cardId}/upload/logo` : '/cards/upload/logo';
+    return uploadFileXhr<{ companyLogoUrl: string }>(endpoint, formData);
+  },
+
+  /**
+   * Upload company logo image to Cloudflare R2 (Legacy/Default method)
+   */
+  async uploadCompanyLogo(localUri: string, cardId = ''): Promise<{ companyLogoUrl: string }> {
+    return this.uploadCardLogo(cardId, localUri);
   },
 
   /**
@@ -84,8 +114,10 @@ export const cardsApi = {
     base64: string,
     mimeType = 'image/png',
     fileName?: string,
+    cardId?: string,
   ): Promise<{ companyLogoUrl: string }> {
-    return apiClient<{ companyLogoUrl: string }>('/cards/upload/logo', {
+    const endpoint = cardId ? `/cards/${cardId}/upload/logo` : '/cards/upload/logo';
+    return apiClient<{ companyLogoUrl: string }>(endpoint, {
       method: 'POST',
       body: JSON.stringify({
         base64,

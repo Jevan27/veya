@@ -14,6 +14,7 @@ describe('CardsService Transactions, Concurrency & Ownership', () => {
       update: jest.Mock;
       updateMany: jest.Mock;
       delete: jest.Mock;
+      count: jest.Mock;
     };
     $transaction: jest.Mock;
   };
@@ -72,6 +73,7 @@ describe('CardsService Transactions, Concurrency & Ownership', () => {
         update: jest.fn(),
         updateMany: jest.fn(),
         delete: jest.fn(),
+        count: jest.fn().mockResolvedValue(1),
       },
       // $transaction executes the callback with the transactional client
       $transaction: jest.fn().mockImplementation(async (callback) => {
@@ -246,8 +248,11 @@ describe('CardsService Transactions, Concurrency & Ownership', () => {
     });
 
     it('should successfully delete card when user is the verified owner', async () => {
-      mockPrismaService.businessCard.findFirst.mockResolvedValue(mockCardA);
+      mockPrismaService.businessCard.findFirst
+        .mockResolvedValueOnce(mockCardA) // findOne
+        .mockResolvedValueOnce({ ...mockCardB, userId: userA, isDefault: false }); // findFirst next card
       mockPrismaService.businessCard.delete.mockResolvedValue(mockCardA);
+      mockPrismaService.businessCard.update.mockResolvedValue({ ...mockCardB, isDefault: true });
 
       const result = await cardsService.remove(userA, mockCardA.id);
 
@@ -257,6 +262,11 @@ describe('CardsService Transactions, Concurrency & Ownership', () => {
       expect(mockPrismaService.$transaction).toHaveBeenCalled();
       expect(mockPrismaService.businessCard.delete).toHaveBeenCalledWith({
         where: { id: mockCardA.id },
+      });
+      // Verifies the remaining card was promoted to default
+      expect(mockPrismaService.businessCard.update).toHaveBeenCalledWith({
+        where: { id: mockCardB.id },
+        data: { isDefault: true },
       });
       expect(result.success).toBe(true);
     });

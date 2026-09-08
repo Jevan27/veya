@@ -86,43 +86,123 @@ export class CardsController {
   }
 
   @Throttle({ upload: { limit: 10, ttl: 60000 } })
-  @Post('upload/logo')
-  @ApiOperation({ summary: 'Upload company logo image to Cloudflare R2 (Max 5MB, JPEG/PNG/WebP)' })
+  @Post(':id/upload/avatar')
+  @ApiOperation({ summary: 'Upload card profile photo to Cloudflare R2 isolated to this card' })
   @ApiConsumes('multipart/form-data', 'application/json')
-  @UseInterceptors(
-    FileInterceptor('logo', {
-      limits: { fileSize: MAX_IMAGE_SIZE_BYTES }, // 5 MB max limit
-    }),
-  )
-  async uploadCompanyLogo(
+  @UseInterceptors(FileInterceptor('photo', { limits: { fileSize: MAX_IMAGE_SIZE_BYTES } }))
+  async uploadCardAvatar(
     @CurrentUser('sub') userId: string,
+    @Param('id') cardId: string,
+    @UploadedFile() file?: Express.Multer.File,
+    @Body() body?: { base64?: string; mimeType?: string; fileName?: string },
+  ): Promise<{ avatarUrl: string }> {
+    await this.cardsService.findOne(userId, cardId);
+    const { buffer, mimeType, originalName } = this.extractImage(file, body, 'avatar.png');
+    const avatarUrl = await this.storageService.uploadCardAsset({
+      userId,
+      cardId,
+      assetType: 'avatar',
+      buffer,
+      originalName,
+      mimeType,
+    });
+    return { avatarUrl };
+  }
+
+  @Throttle({ upload: { limit: 10, ttl: 60000 } })
+  @Post(':id/upload/logo')
+  @ApiOperation({ summary: 'Upload card company logo to Cloudflare R2 isolated to this card' })
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @UseInterceptors(FileInterceptor('logo', { limits: { fileSize: MAX_IMAGE_SIZE_BYTES } }))
+  async uploadCardLogo(
+    @CurrentUser('sub') userId: string,
+    @Param('id') cardId: string,
     @UploadedFile() file?: Express.Multer.File,
     @Body() body?: { base64?: string; mimeType?: string; fileName?: string },
   ): Promise<{ companyLogoUrl: string }> {
-    let buffer: Buffer;
-    let mimeType = 'image/png';
-    let originalName = 'logo.png';
-
-    if (file && file.buffer) {
-      buffer = file.buffer;
-      mimeType = file.mimetype || 'image/png';
-      originalName = file.originalname || 'logo.png';
-    } else if (body?.base64) {
-      const cleanBase64 = body.base64.replace(/^data:image\/\w+;base64,/, '');
-      buffer = Buffer.from(cleanBase64, 'base64');
-      mimeType = body.mimeType || 'image/png';
-      originalName = body.fileName || (mimeType.includes('jpeg') ? 'logo.jpg' : 'logo.png');
-    } else {
-      throw new BadRequestException('Image file or base64 data is required');
-    }
-
-    const companyLogoUrl = await this.storageService.uploadCompanyLogo({
+    await this.cardsService.findOne(userId, cardId);
+    const { buffer, mimeType, originalName } = this.extractImage(file, body, 'logo.png');
+    const companyLogoUrl = await this.storageService.uploadCardAsset({
       userId,
+      cardId,
+      assetType: 'logo',
+      buffer,
+      originalName,
+      mimeType,
+    });
+    return { companyLogoUrl };
+  }
+
+  @Throttle({ upload: { limit: 10, ttl: 60000 } })
+  @Post('upload/avatar')
+  @ApiOperation({ summary: 'Upload draft card avatar asset to Cloudflare R2' })
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @UseInterceptors(FileInterceptor('photo', { limits: { fileSize: MAX_IMAGE_SIZE_BYTES } }))
+  async uploadDraftAvatar(
+    @CurrentUser('sub') userId: string,
+    @UploadedFile() file?: Express.Multer.File,
+    @Body() body?: { base64?: string; mimeType?: string; fileName?: string; cardId?: string },
+  ): Promise<{ avatarUrl: string }> {
+    const { buffer, mimeType, originalName } = this.extractImage(file, body, 'avatar.png');
+    const avatarUrl = await this.storageService.uploadCardAsset({
+      userId,
+      cardId: body?.cardId || 'draft',
+      assetType: 'avatar',
+      buffer,
+      originalName,
+      mimeType,
+    });
+    return { avatarUrl };
+  }
+
+  @Throttle({ upload: { limit: 10, ttl: 60000 } })
+  @Post('upload/logo')
+  @ApiOperation({ summary: 'Upload card company logo image to Cloudflare R2' })
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @UseInterceptors(FileInterceptor('logo', { limits: { fileSize: MAX_IMAGE_SIZE_BYTES } }))
+  async uploadCompanyLogo(
+    @CurrentUser('sub') userId: string,
+    @UploadedFile() file?: Express.Multer.File,
+    @Body() body?: { base64?: string; mimeType?: string; fileName?: string; cardId?: string },
+  ): Promise<{ companyLogoUrl: string }> {
+    const { buffer, mimeType, originalName } = this.extractImage(file, body, 'logo.png');
+    const companyLogoUrl = await this.storageService.uploadCardAsset({
+      userId,
+      cardId: body?.cardId || 'draft',
+      assetType: 'logo',
       buffer,
       originalName,
       mimeType,
     });
 
     return { companyLogoUrl };
+  }
+
+  private extractImage(
+    file?: Express.Multer.File,
+    body?: { base64?: string; mimeType?: string; fileName?: string },
+    defaultName = 'image.png',
+  ): { buffer: Buffer; mimeType: string; originalName: string } {
+    if (file && file.buffer) {
+      return {
+        buffer: file.buffer,
+        mimeType: file.mimetype || 'image/png',
+        originalName: file.originalname || defaultName,
+      };
+    }
+
+    if (body?.base64) {
+      const cleanBase64 = body.base64.replace(/^data:image\/\w+;base64,/, '');
+      const mimeType = body.mimeType || 'image/png';
+      const originalName =
+        body.fileName || (mimeType.includes('jpeg') ? defaultName.replace('.png', '.jpg') : defaultName);
+      return {
+        buffer: Buffer.from(cleanBase64, 'base64'),
+        mimeType,
+        originalName,
+      };
+    }
+
+    throw new BadRequestException('Image file or base64 data is required');
   }
 }

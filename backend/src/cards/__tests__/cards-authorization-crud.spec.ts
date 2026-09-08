@@ -75,6 +75,7 @@ describe('Cards Authorization & Controller CRUD', () => {
 
     const mockStorageService = {
       uploadCompanyLogo: jest.fn(),
+      uploadCardAsset: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -207,20 +208,22 @@ describe('Cards Authorization & Controller CRUD', () => {
     });
   });
 
-  describe('Logo Upload Security & Payload Handling', () => {
-    it('uploads multipart file buffer and returns secure CDN URL', async () => {
+  describe('Asset Upload Security & Card Isolation', () => {
+    it('uploads multipart file buffer isolated to card and returns secure CDN URL', async () => {
       const mockFile = {
         buffer: Buffer.from('fake-image-bytes'),
         mimetype: 'image/png',
         originalname: 'logo.png',
       } as Express.Multer.File;
 
-      storageService.uploadCompanyLogo.mockResolvedValue('https://cdn.veya.app/logo-123.png');
+      storageService.uploadCardAsset.mockResolvedValue('https://cdn.veya.app/logo-123.png');
 
       const result = await controller.uploadCompanyLogo(userA, mockFile);
 
-      expect(storageService.uploadCompanyLogo).toHaveBeenCalledWith({
+      expect(storageService.uploadCardAsset).toHaveBeenCalledWith({
         userId: userA,
+        cardId: 'draft',
+        assetType: 'logo',
         buffer: mockFile.buffer,
         originalName: 'logo.png',
         mimeType: 'image/png',
@@ -228,28 +231,45 @@ describe('Cards Authorization & Controller CRUD', () => {
       expect(result).toEqual({ companyLogoUrl: 'https://cdn.veya.app/logo-123.png' });
     });
 
-    it('uploads base64 image data and strips data URL prefix correctly', async () => {
+    it('uploads base64 image data isolated to specific card ID after verifying ownership', async () => {
       const base64Data = 'data:image/jpeg;base64,dGVzdC1pbWFnZQ==';
-      storageService.uploadCompanyLogo.mockResolvedValue('https://cdn.veya.app/logo-base64.jpg');
+      cardsService.findOne.mockResolvedValue(mockCardEntity);
+      storageService.uploadCardAsset.mockResolvedValue('https://cdn.veya.app/avatar-456.jpg');
 
-      const result = await controller.uploadCompanyLogo(userA, undefined, {
+      const result = await controller.uploadCardAvatar(userA, 'card-1', undefined, {
         base64: base64Data,
         mimeType: 'image/jpeg',
-        fileName: 'custom-logo.jpg',
+        fileName: 'custom-avatar.jpg',
       });
 
-      expect(storageService.uploadCompanyLogo).toHaveBeenCalledWith({
+      expect(cardsService.findOne).toHaveBeenCalledWith(userA, 'card-1');
+      expect(storageService.uploadCardAsset).toHaveBeenCalledWith({
         userId: userA,
+        cardId: 'card-1',
+        assetType: 'avatar',
         buffer: Buffer.from('dGVzdC1pbWFnZQ==', 'base64'),
-        originalName: 'custom-logo.jpg',
+        originalName: 'custom-avatar.jpg',
         mimeType: 'image/jpeg',
       });
-      expect(result).toEqual({ companyLogoUrl: 'https://cdn.veya.app/logo-base64.jpg' });
+      expect(result).toEqual({ avatarUrl: 'https://cdn.veya.app/avatar-456.jpg' });
+    });
+
+    it('enforces ownership: rejects upload to a card belonging to another user', async () => {
+      cardsService.findOne.mockRejectedValue(new NotFoundException('Card not found'));
+
+      await expect(
+        controller.uploadCardLogo(userB, 'card-1', undefined, {
+          base64: 'data:image/png;base64,YWJj',
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(cardsService.findOne).toHaveBeenCalledWith(userB, 'card-1');
+      expect(storageService.uploadCardAsset).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when neither file nor base64 is provided', async () => {
       await expect(controller.uploadCompanyLogo(userA)).rejects.toThrow(BadRequestException);
-      expect(storageService.uploadCompanyLogo).not.toHaveBeenCalled();
+      expect(storageService.uploadCardAsset).not.toHaveBeenCalled();
     });
   });
 });

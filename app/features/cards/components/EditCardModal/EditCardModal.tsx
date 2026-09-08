@@ -25,7 +25,9 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
   onClose,
   cardData,
   onSave,
+  mode = 'edit',
 }) => {
+  const isCreateMode = mode === 'create';
   const { translateY, backdropOpacity, handleDismiss, panHandlers } = useCardGestures({
     visible,
     onClose,
@@ -84,16 +86,20 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
               {/* Modal Header */}
               <View style={styles.headerRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.sheetTitle}>Edit Business Card</Text>
+                  <Text style={styles.sheetTitle}>
+                    {isCreateMode ? 'Create New Card' : 'Edit Business Card'}
+                  </Text>
                   <Text style={styles.sheetSubtitle}>
-                    Update your information below. Changes will be reflected on your card immediately.
+                    {isCreateMode
+                      ? 'Fill in your details below to create an independent digital business card.'
+                      : 'Update your information below. Changes will be reflected on your card immediately.'}
                   </Text>
                 </View>
                 <TouchableOpacity
                   onPress={handleDismiss}
                   hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   style={styles.closeButton}
-                  accessibilityLabel="Close edit modal"
+                  accessibilityLabel="Close modal"
                 >
                   <Feather name="x" size={20} color="#0F172A" />
                 </TouchableOpacity>
@@ -229,7 +235,9 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
                 {isSaving ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.saveButtonText}>Save Changes</Text>
+                  <Text style={styles.saveButtonText}>
+                    {isCreateMode ? 'Create Card' : 'Save Changes'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
