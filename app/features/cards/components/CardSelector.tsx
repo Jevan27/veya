@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Platform,
+  ViewStyle,
 } from 'react-native';
 import { CardDto } from '@veya/shared';
 
@@ -134,24 +135,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 20,
     minHeight: 38,
-    ...Platform.select({
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    ...Platform.select<ViewStyle>({
       ios: {
         shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 3,
       },
       android: {
-        elevation: 1,
+        elevation: 0,
       },
+      default: {},
     }),
   },
   cardChipActive: {
     backgroundColor: '#0F172A',
+    borderColor: '#0F172A',
   },
   cardChipInactive: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
     borderColor: '#E2E8F0',
   },
   accentDot: {

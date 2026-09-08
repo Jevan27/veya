@@ -17,6 +17,7 @@ import { CardHeader } from './CardHeader';
 import { CardContactGrid } from './CardContactGrid';
 import { CardModal } from './CardModal';
 import { useCardFont } from '../../fonts/useCardFont';
+import { formatCardPhone } from '../../utils/phone-format';
 
 export interface VeyaCardProps {
   user: UserDto | null;
@@ -106,7 +107,7 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
   const displayName = user?.name?.trim() || 'Jevan Campillos';
   const displayRole = user?.role?.trim() || 'Full-Stack Developer';
   const displayCompany = user?.company?.trim() || 'Veya';
-  const displayPhone = user?.phoneNumber?.trim() || '+63 912 345 6789';
+  const displayPhone = formatCardPhone(user?.phoneNumber);
   const displayEmail = user?.email?.trim() || 'jevan@veya.app';
 
   // Optional slogan lines for the right side of the card

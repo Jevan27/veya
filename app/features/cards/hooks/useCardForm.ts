@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { UserDto } from '@veya/shared';
 import { EditCardData, EditCardTab } from '../types/card-form.types';
+import { formatCardPhone } from '../utils/phone-format';
 
 interface UseCardFormOptions {
   visible: boolean;
@@ -132,7 +133,7 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
         role,
         company,
         slogan,
-        phoneNumber,
+        phoneNumber: formatCardPhone(phoneNumber, ''),
         email,
         location,
         website,
@@ -174,7 +175,7 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
       name,
       role,
       company,
-      phoneNumber,
+      phoneNumber: formatCardPhone(phoneNumber, ''),
       email,
       avatarUrl,
       onboardingCompleted: true,

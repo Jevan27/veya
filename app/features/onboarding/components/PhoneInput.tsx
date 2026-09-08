@@ -9,6 +9,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { CountryItem } from '../constants/countries';
 import { CountryPickerModal } from './CountryPickerModal';
+import { formatNationalPhoneNumber } from '../../cards/utils/phone-format';
 
 interface PhoneInputProps {
   label?: string;
@@ -65,7 +66,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={(text) => onChangeText(formatNationalPhoneNumber(text))}
           keyboardType="phone-pad"
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
