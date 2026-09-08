@@ -17,6 +17,7 @@ import { UserDto } from '@veya/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCard } from '../hooks/useCard';
 import { isDarkColor } from '../utils/card-colors';
+import { getPublicCardWebUrl } from '../utils/card-url';
 
 interface CardsTabProps {
   user: UserDto | null;
@@ -50,7 +51,7 @@ export const CardsTab: React.FC<CardsTabProps> = ({
   const [modalMode, setModalMode] = useState<'edit' | 'create'>('edit');
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const cardUrl = `https://veya.app/card/${card?.id || user?.id || 'demo'}`;
+  const cardUrl = getPublicCardWebUrl(card?.slug || card?.id || user?.id);
 
   const handleOpenEdit = useCallback(() => {
     setModalMode('edit');

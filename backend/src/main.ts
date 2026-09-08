@@ -51,6 +51,7 @@ async function bootstrap() {
     } else {
       allowedOrigins = [
         'http://localhost:3000',
+        'http://localhost:3001',
         'http://localhost:8081',
         'http://localhost:19006',
         /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,

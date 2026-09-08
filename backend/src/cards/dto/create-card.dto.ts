@@ -70,4 +70,14 @@ export class CreateCardDto {
   @IsOptional()
   @IsBoolean()
   isDefault?: boolean;
+
+  @ApiPropertyOptional({ description: 'Whether this card is publicly published and viewable on web' })
+  @IsOptional()
+  @IsBoolean()
+  isPublished?: boolean;
+
+  @ApiPropertyOptional({ description: 'Unique custom URL slug for public card address' })
+  @IsOptional()
+  @IsString()
+  slug?: string;
 }

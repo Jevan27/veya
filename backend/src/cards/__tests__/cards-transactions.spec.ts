@@ -39,6 +39,8 @@ describe('CardsService Transactions, Concurrency & Ownership', () => {
     cardBackgroundColor: '#FFFFFF',
     fontFamily: 'inter',
     isDefault: true,
+    isPublished: true,
+    slug: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   };
@@ -59,7 +61,9 @@ describe('CardsService Transactions, Concurrency & Ownership', () => {
     primaryColor: '#000000',
     cardBackgroundColor: '#F0F0F0',
     fontFamily: 'inter',
-    isDefault: true,
+    isDefault: false,
+    isPublished: true,
+    slug: null,
     createdAt: new Date('2026-01-02T00:00:00.000Z'),
     updatedAt: new Date('2026-01-02T00:00:00.000Z'),
   };

@@ -41,6 +41,8 @@ describe('Cards Authorization & Controller CRUD', () => {
     cardBackgroundColor: '#FFFFFF',
     fontFamily: 'inter',
     isDefault: true,
+    isPublished: true,
+    slug: null,
     createdAt: new Date('2026-02-01T12:00:00.000Z'),
     updatedAt: new Date('2026-02-01T12:00:00.000Z'),
   };

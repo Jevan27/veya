@@ -7,6 +7,7 @@
     "dev": "pnpm --filter @veya/backend start:dev",
     "dev:app": "pnpm --filter @veya/app start",
     "dev:backend": "pnpm --filter @veya/backend start:dev",
+    "dev:frontend": "pnpm --filter @veya/frontend dev",
     "build": "pnpm --filter @veya/shared build && pnpm --filter @veya/backend build",
     "lint": "pnpm -r --parallel lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",

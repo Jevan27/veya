@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
-import { CardDto } from '@veya/shared';
+import { CardDto, PublicCardDto } from '@veya/shared';
 import { BusinessCard } from '@prisma/client';
 
 @Injectable()
@@ -34,8 +34,31 @@ export class CardsService {
       cardBackgroundColor: card.cardBackgroundColor,
       fontFamily: card.fontFamily ?? 'inter',
       isDefault: card.isDefault,
+      isPublished: card.isPublished,
+      slug: card.slug,
       createdAt: card.createdAt.toISOString(),
       updatedAt: card.updatedAt.toISOString(),
+    };
+  }
+
+  toPublicCardDto(card: BusinessCard): PublicCardDto {
+    return {
+      id: card.id,
+      slug: card.slug,
+      name: card.name,
+      role: card.role,
+      company: card.company,
+      slogan: card.slogan,
+      phoneNumber: card.phoneNumber,
+      email: card.email,
+      location: card.location,
+      website: card.website,
+      avatarUrl: card.avatarUrl,
+      companyLogoUrl: card.companyLogoUrl,
+      primaryColor: card.primaryColor,
+      cardBackgroundColor: card.cardBackgroundColor,
+      fontFamily: card.fontFamily ?? 'inter',
+      isPublished: card.isPublished,
     };
   }
 
@@ -89,6 +112,8 @@ export class CardsService {
             cardBackgroundColor: dto.cardBackgroundColor || '#FFFFFF',
             fontFamily: dto.fontFamily || 'inter',
             isDefault,
+            isPublished: dto.isPublished !== undefined ? dto.isPublished : true,
+            slug: dto.slug || null,
           },
         });
       });
@@ -96,7 +121,7 @@ export class CardsService {
       if (this.isUniqueConstraintViolation(error)) {
         this.logger.warn(`Default card concurrency collision detected for user ${userId}`);
         throw new ConflictException(
-          'Another business card was concurrently designated as the default card. Please try again.',
+          'Another business card was concurrently designated as the default card or has a colliding slug. Please try again.',
         );
       }
       throw error;
@@ -158,6 +183,8 @@ export class CardsService {
             }),
             ...(dto.fontFamily !== undefined && { fontFamily: dto.fontFamily }),
             ...(dto.isDefault !== undefined && { isDefault: dto.isDefault }),
+            ...(dto.isPublished !== undefined && { isPublished: dto.isPublished }),
+            ...(dto.slug !== undefined && { slug: dto.slug || null }),
           },
         });
       });
@@ -165,7 +192,7 @@ export class CardsService {
       if (this.isUniqueConstraintViolation(error)) {
         this.logger.warn(`Default card concurrency collision during update for user ${userId}`);
         throw new ConflictException(
-          'Another business card was concurrently designated as the default card. Please try again.',
+          'Another business card was concurrently designated as the default card or has a colliding slug. Please try again.',
         );
       }
       throw error;
@@ -208,5 +235,87 @@ export class CardsService {
    */
   async setDefault(userId: string, cardId: string): Promise<BusinessCard> {
     return this.update(userId, cardId, { isDefault: true });
+  }
+
+  /**
+   * Resolves a public card representation by public ID or unique slug.
+   * Enforces publication visibility: unpublished cards return a generic 404
+   * so private information and metadata are never leaked.
+   */
+  async getPublicCard(identifier: string): Promise<PublicCardDto> {
+    const trimmed = identifier.trim();
+    if (!trimmed) {
+      throw new NotFoundException('Card not found');
+    }
+
+    const card = await this.prisma.businessCard.findFirst({
+      where: {
+        OR: [
+          { slug: trimmed },
+          { id: trimmed },
+        ],
+      },
+    });
+
+    if (!card) {
+      throw new NotFoundException('Card not found');
+    }
+
+    if (!card.isPublished) {
+      throw new NotFoundException("This card isn't available.");
+    }
+
+    return this.toPublicCardDto(card);
+  }
+
+  /**
+   * Generates a standard vCard (VCF 3.0) string from a public card representation.
+   */
+  generateVCard(card: PublicCardDto): string {
+    const clean = (str?: string | null) =>
+      (str || '').replace(/[\r\n]+/g, ' ').replace(/[;,\\]/g, '\\$&').trim();
+
+    const parts = (card.name || '').trim().split(/\s+/);
+    const familyName = parts.length > 1 ? parts.slice(-1)[0] : '';
+    const givenName = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '';
+
+    const lines: string[] = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `N:${clean(familyName)};${clean(givenName)};;;`,
+      `FN:${clean(card.name)}`,
+    ];
+
+    if (card.company) {
+      lines.push(`ORG:${clean(card.company)}`);
+    }
+    if (card.role) {
+      lines.push(`TITLE:${clean(card.role)}`);
+    }
+    if (card.phoneNumber) {
+      lines.push(`TEL;TYPE=CELL,VOICE:${card.phoneNumber.trim()}`);
+    }
+    if (card.email) {
+      lines.push(`EMAIL;TYPE=INTERNET,PREF:${card.email.trim()}`);
+    }
+    if (card.location) {
+      lines.push(`ADR;TYPE=WORK,POSTAL:;;${clean(card.location)};;;;`);
+    }
+    if (card.website) {
+      lines.push(`URL:${card.website.trim()}`);
+    }
+    if (card.avatarUrl) {
+      lines.push(`PHOTO;VALUE=URI:${card.avatarUrl.trim()}`);
+    }
+    if (card.slogan) {
+      lines.push(`NOTE:${clean(card.slogan)}`);
+    } else {
+      lines.push('NOTE:Digital Business Card powered by Veya');
+    }
+
+    lines.push(`REV:${new Date().toISOString()}`);
+    lines.push('END:VCARD');
+
+    return lines.join('\r\n');
   }
 }

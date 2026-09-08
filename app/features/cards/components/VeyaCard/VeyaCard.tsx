@@ -18,6 +18,7 @@ import { CardContactGrid } from './CardContactGrid';
 import { CardModal } from './CardModal';
 import { useCardFont } from '../../fonts/useCardFont';
 import { formatCardPhone } from '../../utils/phone-format';
+import { getPublicCardWebUrl } from '../../utils/card-url';
 
 export interface VeyaCardProps {
   user: UserDto | null;
@@ -99,7 +100,7 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
     }, 3000);
   }, [toastAnim]);
 
-  const cardUrl = customCardUrl || `https://veya.app/card/${user?.id || 'demo'}`;
+  const cardUrl = customCardUrl || getPublicCardWebUrl(user?.id);
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=12&data=${encodeURIComponent(
     cardUrl
   )}`;

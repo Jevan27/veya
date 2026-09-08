@@ -16,6 +16,7 @@
     "@veya/shared": "workspace:*",
     "expo": "~57.0.19",
     "expo-camera": "^57.0.4",
+    "expo-clipboard": "^57.0.1",
     "expo-constants": "~57.0.17",
     "expo-font": "~57.0.3",
     "expo-image-picker": "^57.0.15",

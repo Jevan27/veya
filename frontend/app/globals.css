@@ -1,0 +1,357 @@
+/* Veya Public Card Global Stylesheet */
+:root {
+  --bg-main: #0B0F19;
+  --bg-ambient: radial-gradient(circle at 50% 15%, rgba(79, 70, 229, 0.15), transparent 70%);
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --border-light: #EEF2F6;
+  --card-radius: 20px;
+  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --primary-veya: #4F46E5;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  background-image: var(--bg-ambient);
+  background-repeat: no-repeat;
+  color: #FFFFFF;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Page Layout */
+.public-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px 40px;
+}
+
+.public-card-container {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Business Card View */
+.veya-web-card {
+  position: relative;
+  width: 100%;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  user-select: none;
+}
+
+.veya-web-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.card-inner {
+  position: relative;
+  padding: 24px 20px 20px;
+  z-index: 2;
+}
+
+/* Top Accent Wave Curve */
+.card-wave-svg {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 90px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Card Upper Section */
+.card-header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.card-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background-color: #1E293B;
+}
+
+.card-avatar-fallback {
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #FFFFFF;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+}
+
+.card-identity-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-name {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.25;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-role {
+  font-size: 13.5px;
+  font-weight: 500;
+  opacity: 0.85;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-company-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 100%;
+}
+
+.card-company-logo {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Slogan Header Text */
+.card-slogan-col {
+  text-align: right;
+  max-width: 95px;
+}
+
+.card-slogan-line {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  line-height: 1.25;
+  opacity: 0.7;
+}
+
+/* Divider */
+.card-divider {
+  width: 100%;
+  height: 1px;
+  margin: 16px 0;
+  opacity: 0.15;
+}
+
+/* Contact Grid */
+.card-contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.contact-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.contact-icon-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.08);
+  transition: transform 0.15s ease;
+}
+
+.contact-tile:hover .contact-icon-chip {
+  transform: scale(1.08);
+}
+
+.contact-text {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.92;
+}
+
+/* Primary Action: Save Contact Button */
+.save-contact-btn {
+  width: 100%;
+  height: 52px;
+  border-radius: 14px;
+  border: none;
+  background: #FFFFFF;
+  color: #0F172A;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.save-contact-btn:hover {
+  transform: translateY(-1px);
+  background: #F8FAFC;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.save-contact-btn:active {
+  transform: scale(0.98);
+}
+
+/* Quick Action Tiles (Call, Email, Website, Share) */
+.action-buttons-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.quick-action-btn {
+  height: 48px;
+  border-radius: 12px;
+  background: #1E293B;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #F8FAFC;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.quick-action-btn:hover {
+  background: #334155;
+  transform: translateY(-1px);
+}
+
+.quick-action-btn:active {
+  transform: scale(0.96);
+}
+
+/* Footer Badge */
+.veya-footer-badge {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.veya-footer-badge a {
+  color: #94A3B8;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.veya-footer-badge a:hover {
+  color: #FFFFFF;
+}
+
+/* Font Classes */
+.font-inter {
+  font-family: var(--font-inter), sans-serif;
+}
+.font-playfair {
+  font-family: var(--font-playfair), serif;
+}
+.font-poppins {
+  font-family: var(--font-poppins), sans-serif;
+}
+.font-montserrat {
+  font-family: var(--font-montserrat), sans-serif;
+}
+.font-lora {
+  font-family: var(--font-lora), serif;
+}
+
+/* Skeleton Animation */
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.skeleton-box {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  animation: pulse 1.6s infinite ease-in-out;
+}
+
+/* Error States */
+.error-card {
+  text-align: center;
+  padding: 48px 24px;
+  background: #111827;
+  border-radius: var(--card-radius);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.error-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.error-card p {
+  color: #94A3B8;
+  font-size: 14px;
+  line-height: 1.5;
+}

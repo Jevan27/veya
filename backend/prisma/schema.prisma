@@ -50,11 +50,15 @@ model BusinessCard {
   cardBackgroundColor String?  @default("#FFFFFF") @map("card_background_color")
   fontFamily          String?  @default("inter") @map("font_family")
   isDefault           Boolean  @default(false) @map("is_default")
+  isPublished         Boolean  @default(true) @map("is_published")
+  slug                String?  @unique
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([userId, isDefault])
+  @@index([slug])
+  @@index([isPublished])
   @@map("business_cards")
 }
 

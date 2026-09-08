@@ -54,6 +54,8 @@ describe('Cards Domain Types & Normalization', () => {
         cardBackgroundColor: '#FFFFFF',
         fontFamily: 'inter',
         isDefault: true,
+        isPublished: true,
+        slug: 'jevan-veya',
         createdAt: new Date('2026-03-01T12:00:00.000Z'),
         updatedAt: new Date('2026-03-02T15:30:00.000Z'),
       };
@@ -103,6 +105,8 @@ describe('Cards Domain Types & Normalization', () => {
         cardBackgroundColor: null,
         fontFamily: null,
         isDefault: false,
+        isPublished: true,
+        slug: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-01T00:00:00.000Z'),
       };
@@ -202,6 +206,8 @@ describe('Cards Domain Types & Normalization', () => {
         cardBackgroundColor: '#FFFFFF',
         fontFamily: null,
         isDefault: true,
+        isPublished: true,
+        slug: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

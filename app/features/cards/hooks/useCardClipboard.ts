@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import * as Clipboard from 'expo-clipboard';
 
 export function useCardClipboard() {
   const [showCopyFeedback, setShowCopyFeedback] = useState(false);
@@ -13,18 +14,21 @@ export function useCardClipboard() {
   }, []);
 
   const copyToClipboard = useCallback(async (text: string) => {
+    if (!text) return;
+
     try {
+      await Clipboard.setStringAsync(text);
+    } catch (err) {
+      // Fallback for web if Clipboard.setStringAsync fails
       if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        // @ts-expect-error optional runtime import for expo-clipboard
-        const Clipboard = await import('expo-clipboard').catch(() => null);
-        if (Clipboard?.setStringAsync) {
-          await Clipboard.setStringAsync(text);
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          // Ignore
         }
+      } else {
+        console.warn('[useCardClipboard] Failed to copy to clipboard:', err);
       }
-    } catch {
-      // Fallback
     }
 
     setShowCopyFeedback(true);
