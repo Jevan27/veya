@@ -55,7 +55,8 @@ export default async function PublicCardPage({ params }: PageProps) {
           <div className="error-card">
             <h2>This card isn't available.</h2>
             <p>
-              The business card you are looking for may have been moved, set to private, or does not exist.
+              The business card you are looking for may have been moved, set to private, or does not
+              exist.
             </p>
           </div>
 

@@ -73,15 +73,19 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
   const dividerColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
 
   // Initial avatar letters
-  const initials = (card.name || 'V')
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((n) => n[0].toUpperCase())
-    .join('') || 'V';
+  const initials =
+    (card.name || 'V')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((n) => n[0].toUpperCase())
+      .join('') || 'V';
 
   const sloganLines = card.slogan
-    ? card.slogan.split(/[\n,]/).map((s) => s.trim()).filter(Boolean)
+    ? card.slogan
+        .split(/[\n,]/)
+        .map((s) => s.trim())
+        .filter(Boolean)
     : null;
 
   const displayPhone = formatDisplayPhone(card.phoneNumber);
@@ -124,10 +128,7 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
               onError={() => setAvatarError(true)}
             />
           ) : (
-            <div
-              className="card-avatar-fallback"
-              style={{ backgroundColor: primaryColor }}
-            >
+            <div className="card-avatar-fallback" style={{ backgroundColor: primaryColor }}>
               {initials}
             </div>
           )}
@@ -161,11 +162,7 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
           {sloganLines && sloganLines.length > 0 && (
             <div className="card-slogan-col">
               {sloganLines.map((line, idx) => (
-                <div
-                  key={idx}
-                  className="card-slogan-line"
-                  style={{ color: primaryColor }}
-                >
+                <div key={idx} className="card-slogan-line" style={{ color: primaryColor }}>
                   {line}
                 </div>
               ))}
@@ -187,9 +184,7 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
               <div
                 className="contact-icon-chip"
                 style={{
-                  backgroundColor: isDark
-                    ? 'rgba(255, 255, 255, 0.08)'
-                    : 'rgba(0, 0, 0, 0.05)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
                   color: primaryColor,
                 }}
               >
@@ -208,9 +203,7 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
               <div
                 className="contact-icon-chip"
                 style={{
-                  backgroundColor: isDark
-                    ? 'rgba(255, 255, 255, 0.08)'
-                    : 'rgba(0, 0, 0, 0.05)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
                   color: primaryColor,
                 }}
               >
@@ -225,9 +218,7 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
               <div
                 className="contact-icon-chip"
                 style={{
-                  backgroundColor: isDark
-                    ? 'rgba(255, 255, 255, 0.08)'
-                    : 'rgba(0, 0, 0, 0.05)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
                   color: primaryColor,
                 }}
               >
@@ -248,17 +239,13 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
               <div
                 className="contact-icon-chip"
                 style={{
-                  backgroundColor: isDark
-                    ? 'rgba(255, 255, 255, 0.08)'
-                    : 'rgba(0, 0, 0, 0.05)',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
                   color: primaryColor,
                 }}
               >
                 <Globe size={13.5} strokeWidth={2.5} />
               </div>
-              <span className="contact-text">
-                {card.website.replace(/^https?:\/\//, '')}
-              </span>
+              <span className="contact-text">{card.website.replace(/^https?:\/\//, '')}</span>
             </a>
           )}
         </div>

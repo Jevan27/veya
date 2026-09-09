@@ -5,7 +5,10 @@ import { PublicCardDto } from '@veya/shared';
  */
 export function buildVCardString(card: PublicCardDto): string {
   const clean = (str?: string | null) =>
-    (str || '').replace(/[\r\n]+/g, ' ').replace(/[;,\\]/g, '\\$&').trim();
+    (str || '')
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/[;,\\]/g, '\\$&')
+      .trim();
 
   const parts = (card.name || '').trim().split(/\s+/);
   const familyName = parts.length > 1 ? parts.slice(-1)[0] : '';
@@ -59,9 +62,7 @@ export function downloadVCard(card: PublicCardDto): void {
   const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
   const url = URL.createObjectURL(blob);
 
-  const safeName = (card.name || 'contact')
-    .replace(/[^a-zA-Z0-9_-]/g, '_')
-    .toLowerCase();
+  const safeName = (card.name || 'contact').replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase();
 
   const link = document.createElement('a');
   link.href = url;

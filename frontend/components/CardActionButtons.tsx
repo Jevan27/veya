@@ -12,9 +12,7 @@ export const CardActionButtons: React.FC<CardActionButtonsProps> = ({ card }) =>
   const [copied, setCopied] = useState(false);
 
   const cleanPhone = card.phoneNumber?.replace(/\s+/g, '');
-  const websiteUrl = card.website?.startsWith('http')
-    ? card.website
-    : `https://${card.website}`;
+  const websiteUrl = card.website?.startsWith('http') ? card.website : `https://${card.website}`;
 
   const handleShare = async () => {
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';

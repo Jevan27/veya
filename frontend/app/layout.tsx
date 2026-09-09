@@ -33,30 +33,81 @@ const lora = Lora({
   display: 'swap',
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://veya.app';
+
 export const viewport: Viewport = {
-  themeColor: '#0B0F19',
+  themeColor: '#FFFFFF',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
 };
 
 export const metadata: Metadata = {
-  title: 'Veya — Digital Business Cards',
-  description: 'Instant, contactless digital business cards for modern professionals.',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://veya.app'),
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'Veya — Digital Business Cards & Contactless Networking',
+    template: '%s | Veya',
+  },
+  description:
+    'Instant, contactless digital business cards for modern professionals. Share your profile via QR, NFC, or direct link with zero app required for recipients.',
+  applicationName: 'Veya',
+  authors: [{ name: 'Veya', url: siteUrl }],
+  generator: 'Next.js',
+  keywords: [
+    'digital business card',
+    'contactless business card',
+    'virtual business card',
+    'NFC business card',
+    'vCard QR code',
+    'electronic business card',
+    'smart business card',
+    'professional networking',
+    'instant contact exchange',
+  ],
+  icons: {
+    icon: '/favicon.png',
+    apple: '/icon.png',
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   openGraph: {
-    title: 'Veya — Digital Business Cards',
-    description: 'Instant, contactless digital business cards for modern professionals.',
-    siteName: 'Veya',
     type: 'website',
+    locale: 'en_US',
+    url: siteUrl,
+    siteName: 'Veya',
+    title: 'Veya — Digital Business Cards & Contactless Networking',
+    description:
+      'Instant, contactless digital business cards for modern professionals. Share via QR, NFC, or direct link with zero app required for recipients.',
+    images: [
+      {
+        url: '/icon.png',
+        width: 512,
+        height: 512,
+        alt: 'Veya Digital Business Card',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Veya — Digital Business Cards & Contactless Networking',
+    description:
+      'Instant, contactless digital business cards for modern professionals. Share via QR, NFC, or link.',
+    images: ['/icon.png'],
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
