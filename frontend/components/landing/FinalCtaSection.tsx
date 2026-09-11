@@ -11,11 +11,10 @@ export const FinalCtaSection: React.FC = () => {
             <span>Elevate Your Network</span>
           </div>
 
-          <h2 className="final-cta-heading">Ready to leave the old business card behind?</h2>
+          <h2 className="final-cta-heading">Ready to switch to a digital business card?</h2>
 
           <p className="final-cta-subtext">
-            Join the professionals who never get caught without a business card. Download Veya and
-            share your digital identity anywhere, anytime.
+            Create your Veya card and start sharing your contact details with a tap, QR code, or link.
           </p>
 
           <div className="final-cta-buttons">

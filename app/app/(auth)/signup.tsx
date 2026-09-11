@@ -87,19 +87,11 @@ export default function SignupScreen() {
   };
 
   const handleTermsPress = () => {
-    Alert.alert(
-      'Terms of Service',
-      'By using Veya, you agree to our standard terms of service, acceptable use policies, and service agreements.',
-      [{ text: 'Close' }],
-    );
+    router.push('/legal/terms');
   };
 
   const handlePrivacyPress = () => {
-    Alert.alert(
-      'Privacy Policy',
-      'Veya values your privacy and protects your personal data with enterprise-grade encryption.',
-      [{ text: 'Close' }],
-    );
+    router.push('/legal/privacy');
   };
 
   return (

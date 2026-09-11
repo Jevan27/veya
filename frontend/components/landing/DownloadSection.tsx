@@ -113,7 +113,7 @@ export const DownloadSection: React.FC = () => {
                   className="btn btn-secondary btn-sm"
                   style={{ width: '100%', justifyContent: 'center' }}
                 >
-                  <Sparkles size={15} />
+
                   <span>Preview Card in Browser</span>
                 </a>
               </div>

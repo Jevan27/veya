@@ -135,7 +135,7 @@ export const featuresContent: FeatureItem[] = [
     id: 'wave-accents',
     title: 'Veya Card Designs',
     description:
-      'Give your digital business card a distinct look with Veya’s signature wave designs and clean layouts.',
+      'Give your digital business card a distinct look with Veya’s signature designs and clean layouts.',
     iconName: 'Layers',
     badge: 'Aesthetics',
   },
@@ -161,7 +161,7 @@ export const featuresContent: FeatureItem[] = [
     description:
       'Add a clear profile photo or company logo to your Veya card and keep your profile looking professional.',
     iconName: 'Image',
-    badge: 'Cloud Storage',
+    badge: 'Branding',
   },
   {
     id: 'privacy-controls',
@@ -178,29 +178,29 @@ export const howItWorksContent: StepItem[] = [
     step: '01',
     title: 'Create Your Card',
     description:
-      'Sign up in seconds and fill out your professional profile — your name, job title, company name, and direct contact avenues.',
-    highlight: 'Takes under 2 minutes',
+      'Create your profile with your name, job title, company, phone number, email, and other contact information.',
+    highlight: 'Quick setup',
   },
   {
     step: '02',
-    title: 'Style & Customize',
+    title: 'Customize Your Card',
     description:
-      'Pick a color theme, select your font, add your avatar photo, and upload your company emblem to make it distinctly yours.',
-    highlight: 'Live visual preview',
+      'Choose your colors and font, then add your profile photo and company logo to personalize your digital business card.',
+    highlight: 'Customize your profile',
   },
   {
     step: '03',
-    title: 'Share Anywhere',
+    title: 'Share Your Card',
     description:
-      'Display your on-screen QR code during in-person meetings, or copy your personalized web card link to send via message, email, or bio.',
-    highlight: 'No recipient app needed',
+      'Tap to share with NFC, show your QR code, or send your Veya link through text, email, WhatsApp, or social media.',
+    highlight: 'NFC, QR code & link',
   },
   {
     step: '04',
-    title: 'Instant Connection',
+    title: 'Save Contact',
     description:
-      'Your contact opens your card in any mobile browser and saves you directly to their device contacts with a single tap.',
-    highlight: 'One-tap vCard save',
+      'People can open your card in their phone\'s browser and save your contact details directly to their contacts.',
+    highlight: 'No app required',
   },
 ];
 
@@ -240,38 +240,38 @@ export const comparisonContent: ComparisonRow[] = [
 export const audienceContent: PersonaItem[] = [
   {
     role: 'Independent Professionals & Consultants',
-    tagline: 'Always make a memorable, organized first impression.',
+    tagline: 'Keep your professional details ready to share.',
     benefits: [
-      'Carry your card at all times right in your smartphone pocket',
-      'Provide instant links to your portfolio and scheduling site',
-      'Never run out of physical cards at critical networking events',
+      'Keep your Veya card on your phone wherever you go',
+      'Link directly to your portfolio, website, or booking page',
+      'Update your contact details without printing new cards',
     ],
   },
   {
     role: 'Founders & Entrepreneurs',
-    tagline: 'Represent your startup with cutting-edge digital polish.',
+    tagline: 'Make it easy to share your company and contact details.',
     benefits: [
-      'Showcase your company logo and brand slogan with pride',
-      'Easily update role or company website as your venture evolves',
-      'Signal technical modernism to investors, partners, and recruits',
+      'Add your company logo and website to your card',
+      'Update your role or company information anytime',
+      'Share your card with investors, partners, clients, and new contacts',
     ],
   },
   {
     role: 'Freelancers & Creatives',
-    tagline: 'Stand out from standard corporate business cards.',
+    tagline: 'Showcase your best work and your contact details.',
     benefits: [
-      'Select fonts and color palettes that reflect your personal brand',
-      'Link clients directly to your website and contact channels',
-      'One tap for clients to save your direct mobile number',
+      'Customize your card with your preferred colors and fonts',
+      'Link to your portfolio, website, and social profiles',
+      'Let clients save your contact details with one tap',
     ],
   },
   {
     role: 'Sales & Business Development',
-    tagline: 'Shorten the bridge between introduction and follow-up.',
+    tagline: 'Make it easier to follow up after meeting someone.',
     benefits: [
-      'Guarantee prospect has your direct line saved in their phone',
-      'Eliminate manual card scanning or transcription errors',
-      'Share your card seamlessly over video calls via QR code',
+      'Share your direct contact details right away',
+      'Give prospects an easy way to save your information',
+      'Share your card through a QR code during meetings or video calls',
     ],
   },
 ];

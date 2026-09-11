@@ -68,22 +68,6 @@ export default function LoginScreen() {
     );
   };
 
-  const handleTermsPress = () => {
-    Alert.alert(
-      'Terms of Service',
-      'By using Veya, you agree to our standard terms of service, acceptable use policies, and service agreements.',
-      [{ text: 'Close' }],
-    );
-  };
-
-  const handlePrivacyPress = () => {
-    Alert.alert(
-      'Privacy Policy',
-      'Veya values your privacy and protects your personal data with enterprise-grade encryption.',
-      [{ text: 'Close' }],
-    );
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -175,21 +159,6 @@ export default function LoginScreen() {
                 text="Continue with Google"
                 style={styles.googleButton}
               />
-
-              {/* Terms and Privacy Policy notice */}
-              <View style={styles.legalContainer}>
-                <Text style={styles.legalText}>
-                  By signing in, you agree to our{' '}
-                  <Text style={styles.legalLink} onPress={handleTermsPress}>
-                    Terms of Service
-                  </Text>
-                  {' '}and{' '}
-                  <Text style={styles.legalLink} onPress={handlePrivacyPress}>
-                    Privacy Policy
-                  </Text>
-                  .
-                </Text>
-              </View>
             </View>
 
             {/* Bottom Switch to Sign-Up */}
@@ -280,21 +249,6 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     marginBottom: 20,
-  },
-  legalContainer: {
-    paddingHorizontal: 8,
-    marginBottom: 28,
-  },
-  legalText: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  legalLink: {
-    color: '#111827',
-    fontWeight: '600',
-    textDecorationLine: 'underline',
   },
   footer: {
     flexDirection: 'row',

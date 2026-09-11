@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
 import { UserDto } from '@veya/shared';
 import { usersApi } from '../../../services/api/users.api';
+import { useRouter } from 'expo-router';
 
 interface SettingsTabProps {
   user: UserDto | null;
@@ -27,6 +28,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   onSignOut,
   onDeleteAccount,
 }) => {
+  const router = useRouter();
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
@@ -226,6 +228,42 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           <View style={styles.menuContent}>
             <Text style={styles.menuTitle}>Notifications</Text>
             <Text style={styles.menuSubtitle}>Card scans and views</Text>
+          </View>
+          <Feather name="chevron-right" size={16} color="#9CA3AF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Section: Legal & Compliance */}
+      <Text style={styles.sectionHeader}>LEGAL & COMPLIANCE</Text>
+      <View style={styles.sectionGroup}>
+        <TouchableOpacity
+          style={styles.menuRow}
+          onPress={() => router.push('/legal/terms')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.menuIconWrapper}>
+            <Feather name="file-text" size={16} color="#111111" />
+          </View>
+          <View style={styles.menuContent}>
+            <Text style={styles.menuTitle}>Terms of Service</Text>
+            <Text style={styles.menuSubtitle}>User agreement and acceptable use</Text>
+          </View>
+          <Feather name="chevron-right" size={16} color="#9CA3AF" />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.menuRow}
+          onPress={() => router.push('/legal/privacy')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.menuIconWrapper}>
+            <Feather name="shield" size={16} color="#111111" />
+          </View>
+          <View style={styles.menuContent}>
+            <Text style={styles.menuTitle}>Privacy Policy</Text>
+            <Text style={styles.menuSubtitle}>Data protection, rights & DPO</Text>
           </View>
           <Feather name="chevron-right" size={16} color="#9CA3AF" />
         </TouchableOpacity>

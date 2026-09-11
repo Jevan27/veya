@@ -91,14 +91,14 @@ export const Footer: React.FC = () => {
             <h3 className="footer-col-title">Legal & Security</h3>
             <ul className="footer-links-list">
               <li>
-                <span className="footer-link-disabled" title="Privacy policy documentation">
+                <Link href="/privacy" className="footer-link">
                   Privacy Policy
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="footer-link-disabled" title="Terms of service documentation">
+                <Link href="/terms" className="footer-link">
                   Terms of Service
-                </span>
+                </Link>
               </li>
               <li>
                 <a href="#trust" className="footer-link">

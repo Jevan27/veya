@@ -9,11 +9,8 @@ export const HowItWorksSection: React.FC = () => {
           <div className="badge-pill">
             <span>How It Works</span>
           </div>
-          <h2 className="section-heading">From download to sharing in 4 easy steps.</h2>
-          <p className="section-lead">
-            Setting up your Veya card takes less than two minutes. Here is how simple modern
-            networking becomes.
-          </p>
+          <h2 className="section-heading">Create your digital business card in 4 simple steps.</h2>
+
         </div>
 
         <div className="steps-grid">

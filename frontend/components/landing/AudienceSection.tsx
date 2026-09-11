@@ -11,10 +11,9 @@ export const AudienceSection: React.FC = () => {
             <Users size={13} color="#000000" />
             <span>Built For You</span>
           </div>
-          <h2 className="section-heading">Tailored for driven professionals.</h2>
+          <h2 className="section-heading">A digital business card for every professionals.</h2>
           <p className="section-lead">
-            Whether you are meeting clients one-on-one, speaking on stage, or growing a business,
-            Veya empowers your network.
+            Whether you&apos;re meeting a client, building a company, working with customers, or growing your personal brand, Veya gives you one simple way to share your contact details.
           </p>
         </div>
 
