@@ -19,9 +19,11 @@ export async function fetchPublicCard(identifier: string): Promise<PublicCardDto
   try {
     const baseUrl = getApiBaseUrl();
     const res = await fetch(`${baseUrl}/api/v1/public/cards/${encodeURIComponent(identifier)}`, {
-      next: { revalidate: 60 }, // Cache on Next.js edge for 60 seconds
+      cache: 'no-store', // Always fetch fresh card data directly from backend
       headers: {
         Accept: 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
       },
     });
 

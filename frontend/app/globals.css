@@ -1770,6 +1770,180 @@ body {
   opacity: 0.9;
 }
 
+/* ==================================================== */
+/* 3D Flippable Web Card Container & Scene              */
+/* ==================================================== */
+.veya-web-card-scene {
+  perspective: 1200px;
+  width: 100%;
+}
+
+.veya-web-card-flipper {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  cursor: pointer;
+}
+
+.veya-web-card-flipper.flipped-left {
+  transform: rotateY(-180deg);
+}
+
+.veya-web-card-flipper.flipped-right {
+  transform: rotateY(180deg);
+}
+
+.veya-web-card-face {
+  position: relative;
+  width: 100%;
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  box-shadow:
+    0 20px 40px -15px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(15, 23, 42, 0.06);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: box-shadow 0.25s ease;
+  user-select: none;
+}
+
+.veya-web-card-flipper:hover .veya-web-card-face {
+  box-shadow:
+    0 24px 48px -12px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(15, 23, 42, 0.1);
+}
+
+.veya-web-card-face.face-front {
+  z-index: 2;
+}
+
+.veya-web-card-face.face-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  transform: rotateY(180deg);
+  z-index: 1;
+}
+
+.card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-side-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.card-website-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.card-front-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 0 14px;
+}
+
+.card-front-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  margin-bottom: 8px;
+}
+
+.card-monogram {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.card-company-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  margin-bottom: 4px;
+}
+
+.card-slogan-banner {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-top: 4px;
+  opacity: 0.9;
+}
+
+.web-flip-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.web-flip-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.web-flip-button:hover {
+  transform: translateY(-1.5px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  background: #f8fafc;
+}
+
+.web-flip-button:active {
+  transform: scale(0.95);
+}
+
+.web-flip-icon {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.web-flip-icon.spin {
+  transform: rotate(180deg);
+}
+
 .save-contact-btn {
   width: 100%;
   height: 52px;
@@ -2229,4 +2403,53 @@ body {
   .legal-title {
     font-size: 28px;
   }
+}
+
+/* ==================================================== */
+/* Private / Unavailable Card Presentation              */
+/* ==================================================== */
+.private-card-box {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--card-radius);
+  padding: 48px 24px;
+  text-align: center;
+  box-shadow:
+    0 20px 40px -15px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.private-lock-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f172a;
+  margin-bottom: 20px;
+}
+
+.private-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  max-width: 340px;
+}
+
+.private-card-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0;
 }

@@ -26,11 +26,20 @@ export function getBaseApiUrl(): string {
   if (__DEV__) {
     const hostUri =
       Constants.expoConfig?.hostUri ??
+      (Constants as unknown as { expoGoConfig?: { debuggerHost?: string } })?.expoGoConfig?.debuggerHost ??
+      (Constants as unknown as { experienceUrl?: string })?.experienceUrl?.replace(/^exp:\/\//, '') ??
       (Constants as unknown as { manifest2?: { extra?: { expoGo?: { debuggerHost?: string } } } })?.manifest2?.extra?.expoGo?.debuggerHost;
 
     if (hostUri) {
       const hostIp = hostUri.split(':')[0];
-      return `http://${hostIp}:3000/api/v1`;
+      if (hostIp && hostIp !== 'localhost' && hostIp !== '127.0.0.1') {
+        return `http://${hostIp}:3000/api/v1`;
+      }
+    }
+
+    // Android emulator special localhost alias
+    if (Platform.OS === 'android' && (!envUrl || envUrl.includes('localhost'))) {
+      return 'http://10.0.2.2:3000/api/v1';
     }
   }
 
@@ -133,6 +142,13 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
 
   if (!headers.has('Content-Type') && !isFormData) {
     headers.set('Content-Type', 'application/json');
+  }
+
+  if (!headers.has('Cache-Control')) {
+    headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  if (!headers.has('Pragma')) {
+    headers.set('Pragma', 'no-cache');
   }
 
   // Attach access token if auth is required or by default if token is present

@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Header,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
@@ -47,6 +48,9 @@ export class CardsController {
   @Get()
   @ApiOperation({ summary: 'List all digital business cards for current user' })
   @ApiResponse({ status: 200, description: 'List of business cards' })
+  @Header('Cache-Control', 'no-cache, no-store, must-revalidate')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
   async findAll(@CurrentUser('sub') userId: string): Promise<BusinessCardDto[]> {
     const cards = await this.cardsService.findAllByUserId(userId);
     return cards.map((c) => this.cardsService.toCardDto(c));
@@ -55,6 +59,9 @@ export class CardsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a specific business card by ID' })
   @ApiResponse({ status: 200, description: 'Business card details' })
+  @Header('Cache-Control', 'no-cache, no-store, must-revalidate')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
   async findOne(
     @CurrentUser('sub') userId: string,
     @Param('id') id: string,

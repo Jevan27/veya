@@ -162,6 +162,7 @@ describe('Public Cards Architecture & Security Boundaries', () => {
 
       const result = await publicCardsController.getPublicCard('jevan-veya');
       expect(result.name).toBe('Jevan Campillos');
+      expect(result.updatedAt).toBe(sampleCard.updatedAt.toISOString());
       expect((result as unknown as Record<string, unknown>).userId).toBeUndefined();
     });
 

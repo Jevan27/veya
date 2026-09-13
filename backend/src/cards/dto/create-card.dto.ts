@@ -17,10 +17,10 @@ export class CreateCardDto {
   @IsString()
   company?: string;
 
-  @ApiPropertyOptional({ description: 'Slogan or tagline' })
+  @ApiPropertyOptional({ description: 'Slogan or tagline', nullable: true })
   @IsOptional()
   @IsString()
-  slogan?: string;
+  slogan?: string | null;
 
   @ApiPropertyOptional({ description: 'Contact phone number' })
   @IsOptional()

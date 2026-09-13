@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { VeyaCard } from './VeyaCard/VeyaCard';
+import { CardFlipButton } from './VeyaCard/CardFlipButton';
+import { CardVisibilityButton } from './VeyaCard/CardVisibilityButton';
 import { CardSkeleton } from './VeyaCard/CardSkeleton';
 import { EditCardModal } from './EditCardModal/EditCardModal';
 import { CardSelector } from './CardSelector';
 import { AddCardButton } from './AddCardButton';
 import { EditCardData } from '../types/card-form.types';
 import { QrScannerIcon } from '../../../components/icons/QrScannerIcon';
+import { Toast } from '../../../components/Toast';
 import { UserDto } from '@veya/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCard } from '../hooks/useCard';
@@ -24,11 +28,8 @@ interface CardsTabProps {
   onOpenScanner: () => void;
   onEditCard?: () => void;
   onUserUpdate?: (user: UserDto) => void;
-  /** Optional custom slogan (defaults to Veya brand slogan) */
-  slogan?: string | string[] | null;
 }
 
-const DEFAULT_SLOGAN = 'PEOPLE\nIDEAS\nOPPORTUNITIES\nCONNECTED';
 const DEFAULT_LOCATION = 'Caloocan, Metro Manila, Philippines';
 const DEFAULT_WEBSITE = 'https://www.veya.app';
 
@@ -46,10 +47,60 @@ export const CardsTab: React.FC<CardsTabProps> = ({
     setActiveCardId,
     createCard,
     saveCard,
+    toggleCardVisibility,
+    setCardVisibility,
   } = useCard();
 
   const [modalMode, setModalMode] = useState<'edit' | 'create'>('edit');
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+
+  // Toast notification state for privacy toggle
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastIcon, setToastIcon] = useState<keyof typeof Feather.glyphMap>('globe');
+  const [toastIconBg, setToastIconBg] = useState<string>('#10B981');
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleToggleVisibility = useCallback(async () => {
+    if (!card || isTogglingVisibility) return;
+    const isCurrentlyPublic = card.isPublished !== false;
+    const isNowPublic = !isCurrentlyPublic;
+
+    setIsTogglingVisibility(true);
+
+    try {
+      await setCardVisibility(card.id, isNowPublic);
+
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+      setToastMessage(isNowPublic ? 'Card is Public' : 'Card is Private');
+      setToastIcon(isNowPublic ? 'globe' : 'lock');
+      setToastIconBg(isNowPublic ? '#10B981' : '#64748B');
+      setToastVisible(true);
+
+      toastTimeoutRef.current = setTimeout(() => {
+        setToastVisible(false);
+      }, 2200);
+    } catch (err) {
+      console.warn('[CardsTab] Failed to toggle card visibility:', err);
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+      setToastMessage('Failed to update card visibility');
+      setToastIcon('alert-circle');
+      setToastIconBg('#EF4444');
+      setToastVisible(true);
+
+      toastTimeoutRef.current = setTimeout(() => {
+        setToastVisible(false);
+      }, 2500);
+    } finally {
+      setIsTogglingVisibility(false);
+    }
+  }, [card, isTogglingVisibility, setCardVisibility]);
 
   const cardUrl = getPublicCardWebUrl(card?.slug || card?.id || user?.id);
 
@@ -61,6 +112,14 @@ export const CardsTab: React.FC<CardsTabProps> = ({
     }
   }, [onEditCard]);
 
+  const handleSelectCard = useCallback(
+    (id: string) => {
+      setActiveCardId(id);
+      setIsCardFlipped(false);
+    },
+    [setActiveCardId]
+  );
+
   const handleOpenCreate = useCallback(() => {
     setModalMode('create');
     setIsModalVisible(true);
@@ -71,7 +130,7 @@ export const CardsTab: React.FC<CardsTabProps> = ({
       name: user?.name || '',
       role: '',
       company: '',
-      slogan: DEFAULT_SLOGAN,
+      slogan: '',
       phoneNumber: '',
       email: user?.email || '',
       location: DEFAULT_LOCATION,
@@ -151,7 +210,7 @@ export const CardsTab: React.FC<CardsTabProps> = ({
         <CardSelector
           cards={cards}
           activeCardId={activeCardId}
-          onSelectCard={setActiveCardId}
+          onSelectCard={handleSelectCard}
         />
 
         {/* ──────────────── PRIMARY LANDSCAPE DIGITAL CARD ──────────────── */}
@@ -171,10 +230,29 @@ export const CardsTab: React.FC<CardsTabProps> = ({
               fontFamily={cardData.fontFamily}
               backgroundStyle={cardData.backgroundStyle}
               socialLinks={cardData.socialLinks}
+              isFlipped={isCardFlipped}
+              onFlip={setIsCardFlipped}
               onEdit={handleOpenEdit}
+              isPublished={card?.isPublished ?? true}
+              onTogglePrivacy={() => toggleCardVisibility(card?.id)}
             />
           )}
         </View>
+
+        {/* ──────────────── EXTERNAL CARD CONTROLS (FLIP & VISIBILITY TOGGLE) ──────────────── */}
+        {!shouldShowSkeleton && cardData && (
+          <View style={styles.cardControlsRow}>
+            <CardFlipButton
+              isFlipped={isCardFlipped}
+              onFlip={() => setIsCardFlipped((prev) => !prev)}
+            />
+            <CardVisibilityButton
+              isPublished={card?.isPublished ?? true}
+              onToggle={handleToggleVisibility}
+              isLoading={isTogglingVisibility}
+            />
+          </View>
+        )}
       </ScrollView>
 
       {/* ──────────────── FLOATING '+' ADD CARD BUTTON ──────────────── */}
@@ -187,6 +265,15 @@ export const CardsTab: React.FC<CardsTabProps> = ({
         cardData={modalMode === 'create' ? newCardDefaultData : (cardData || newCardDefaultData)}
         onSave={handleSaveModal}
         mode={modalMode}
+      />
+
+      {/* ──────────────── PRIVACY TOGGLE TOAST NOTIFICATION ──────────────── */}
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        icon={toastIcon}
+        iconBgColor={toastIconBg}
+        bottomOffset={bottomScrollPadding - 24}
       />
     </View>
   );
@@ -238,5 +325,12 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: '100%',
     marginBottom: 16,
+  },
+  cardControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    marginVertical: 8,
   },
 });

@@ -6,6 +6,9 @@ import { PublicCard } from '../../../components/PublicCard';
 import { SaveContactButton } from '../../../components/SaveContactButton';
 import { CardActionButtons } from '../../../components/CardActionButtons';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface PageProps {
   params: Promise<{ identifier: string }>;
 }
@@ -14,10 +17,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { identifier } = await params;
   const card = await fetchPublicCard(identifier);
 
-  if (!card) {
+  if (!card || card.isPublished === false) {
     return {
-      title: 'Card Not Available — Veya',
-      description: 'This Veya business card is currently unavailable.',
+      title: 'The Card Details are Private or Not Available — Veya',
+      description: 'This digital business card is currently set to private by its owner or is not available.',
     };
   }
 
@@ -48,15 +51,29 @@ export default async function PublicCardPage({ params }: PageProps) {
   const { identifier } = await params;
   const card = await fetchPublicCard(identifier);
 
-  if (!card) {
+  if (!card || card.isPublished === false) {
     return (
       <main className="public-page-wrapper">
         <div className="public-card-container">
-          <div className="error-card">
-            <h2>This card isn't available.</h2>
-            <p>
-              The business card you are looking for may have been moved, set to private, or does not
-              exist.
+          <div className="private-card-box">
+            <div className="private-lock-badge">
+              <svg
+                width="26"
+                height="26"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h2 className="private-card-title">The Card Details are Private or Not Available.</h2>
+            <p className="private-card-subtitle">
+              This digital business card has been set to private by its owner or is not currently available.
             </p>
           </div>
 

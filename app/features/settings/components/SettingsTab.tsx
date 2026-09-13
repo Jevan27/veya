@@ -14,6 +14,8 @@ import { Feather } from '@expo/vector-icons';
 import { UserDto } from '@veya/shared';
 import { usersApi } from '../../../services/api/users.api';
 import { useRouter } from 'expo-router';
+import { CardPrivacyModal } from './CardPrivacyModal';
+import { useCard } from '../../cards/hooks/useCard';
 
 interface SettingsTabProps {
   user: UserDto | null;
@@ -29,8 +31,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   onDeleteAccount,
 }) => {
   const router = useRouter();
+  const { cards, setCardVisibility } = useCard();
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isPrivacyModalVisible, setIsPrivacyModalVisible] = useState(false);
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -161,48 +165,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Section: Digital Identity */}
-      <Text style={styles.sectionHeader}>DIGITAL IDENTITY</Text>
-      <View style={styles.sectionGroup}>
-        <TouchableOpacity
-          style={styles.menuRow}
-          onPress={() => handleActionStub('Card Link')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.menuIconWrapper}>
-            <Feather name="link" size={16} color="#111111" />
-          </View>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuTitle}>Custom Card URL</Text>
-            <Text style={styles.menuSubtitle}>veya.app/card/{user?.id?.slice(0, 8)}</Text>
-          </View>
-          <Feather name="chevron-right" size={16} color="#9CA3AF" />
-        </TouchableOpacity>
-
-        <View style={styles.divider} />
-
-        <TouchableOpacity
-          style={styles.menuRow}
-          onPress={() => handleActionStub('Storage Provider')}
-          activeOpacity={0.7}
-        >
-          <View style={styles.menuIconWrapper}>
-            <Feather name="cloud" size={16} color="#111111" />
-          </View>
-          <View style={styles.menuContent}>
-            <Text style={styles.menuTitle}>Media Storage</Text>
-            <Text style={styles.menuSubtitle}>Cloudflare R2 Bucket (Active)</Text>
-          </View>
-          <Feather name="chevron-right" size={16} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-
       {/* Section: Preferences */}
       <Text style={styles.sectionHeader}>PREFERENCES</Text>
       <View style={styles.sectionGroup}>
         <TouchableOpacity
           style={styles.menuRow}
-          onPress={() => handleActionStub('Privacy & Sharing')}
+          onPress={() => setIsPrivacyModalVisible(true)}
           activeOpacity={0.7}
         >
           <View style={styles.menuIconWrapper}>
@@ -301,6 +269,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       </TouchableOpacity>
 
       <Text style={styles.versionText}>Veya v0.1.0 • Build 2026</Text>
+
+      {/* Card Privacy & Security Modal */}
+      <CardPrivacyModal
+        visible={isPrivacyModalVisible}
+        onClose={() => setIsPrivacyModalVisible(false)}
+        cards={cards}
+        onSetVisibility={setCardVisibility}
+      />
     </ScrollView>
   );
 };

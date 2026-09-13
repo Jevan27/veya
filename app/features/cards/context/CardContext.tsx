@@ -37,11 +37,14 @@ export interface CardContextValue {
   saveCard: (updated: EditCardData, targetCardId?: string) => Promise<void>;
   /** Delete a business card by ID */
   deleteCard: (cardId: string) => Promise<void>;
+  /** Toggle visibility (public vs private) of a card */
+  toggleCardVisibility: (cardId?: string) => Promise<void>;
+  /** Explicitly set card visibility */
+  setCardVisibility: (cardId: string, isPublished: boolean) => Promise<void>;
 }
 
 export const CardContext = createContext<CardContextValue | null>(null);
 
-const DEFAULT_SLOGAN = 'PEOPLE\nIDEAS\nOPPORTUNITIES\nCONNECTED';
 const DEFAULT_LOCATION = 'Caloocan, Metro Manila, Philippines';
 const DEFAULT_WEBSITE = 'https://www.veya.app';
 
@@ -57,12 +60,15 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const userRef = useRef<UserDto | null>(user);
   userRef.current = user;
 
+  const cardsRef = useRef<CardDto[]>(cards);
+  cardsRef.current = cards;
+
   const mapToEditCardData = useCallback((primaryCard: CardDto, currentUser: UserDto | null): EditCardData => {
     return {
       name: primaryCard.name || currentUser?.name || '',
       role: primaryCard.role || '',
       company: primaryCard.company || '',
-      slogan: primaryCard.slogan || DEFAULT_SLOGAN,
+      slogan: primaryCard.slogan ?? '',
       phoneNumber: primaryCard.phoneNumber || '',
       email: primaryCard.email || currentUser?.email || '',
       location: primaryCard.location || DEFAULT_LOCATION,
@@ -97,7 +103,7 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         name: userRef.current.name || '',
         role: userRef.current.role || '',
         company: userRef.current.company || '',
-        slogan: DEFAULT_SLOGAN,
+        slogan: '',
         phoneNumber: userRef.current.phoneNumber || '',
         email: userRef.current.email || '',
         location: DEFAULT_LOCATION,
@@ -221,7 +227,7 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           name: newCardData.name,
           role: newCardData.role,
           company: newCardData.company,
-          slogan: newCardData.slogan,
+          slogan: newCardData.slogan.trim() ? newCardData.slogan.trim() : null,
           phoneNumber: newCardData.phoneNumber,
           email: newCardData.email,
           location: newCardData.location,
@@ -296,7 +302,7 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             name: mergedData.name,
             role: mergedData.role,
             company: mergedData.company,
-            slogan: mergedData.slogan,
+            slogan: mergedData.slogan.trim() ? mergedData.slogan.trim() : null,
             phoneNumber: mergedData.phoneNumber,
             email: mergedData.email,
             location: mergedData.location,
@@ -318,7 +324,7 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             name: mergedData.name,
             role: mergedData.role,
             company: mergedData.company,
-            slogan: mergedData.slogan,
+            slogan: mergedData.slogan.trim() ? mergedData.slogan.trim() : null,
             phoneNumber: mergedData.phoneNumber,
             email: mergedData.email,
             location: mergedData.location,
@@ -370,6 +376,58 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     [activeCardId]
   );
 
+  /**
+   * Explicitly set card visibility (public vs private) with optimistic update
+   */
+  const setCardVisibility = useCallback(
+    async (cardId: string, isPublished: boolean) => {
+      const current = cardsRef.current.find((c) => c.id === cardId);
+      if (!current) return;
+      if (current.isPublished === isPublished) return;
+
+      const previousPublished = current.isPublished ?? true;
+
+      // Optimistic update
+      setCards((prev) =>
+        prev.map((c) => (c.id === cardId ? { ...c, isPublished } : c))
+      );
+
+      try {
+        const updated = await cardsApi.updateCard(cardId, { isPublished });
+        setCards((prev) =>
+          prev.map((c) =>
+            c.id === cardId
+              ? { ...c, isPublished: updated?.isPublished !== undefined ? updated.isPublished : isPublished }
+              : c
+          )
+        );
+      } catch (err) {
+        // Rollback optimistic update on error
+        setCards((prev) =>
+          prev.map((c) => (c.id === cardId ? { ...c, isPublished: previousPublished } : c))
+        );
+        console.warn('[CardProvider] Error updating card visibility:', err);
+        throw err;
+      }
+    },
+    []
+  );
+
+  /**
+   * Toggle visibility of active or targeted card
+   */
+  const toggleCardVisibility = useCallback(
+    async (targetCardId?: string) => {
+      const targetId = targetCardId || activeCardId || card?.id;
+      if (!targetId) return;
+      const current = cardsRef.current.find((c) => c.id === targetId);
+      if (!current) return;
+      const nextPublished = !(current.isPublished ?? true);
+      return await setCardVisibility(targetId, nextPublished);
+    },
+    [activeCardId, card?.id, setCardVisibility]
+  );
+
   const value = useMemo<CardContextValue>(
     () => ({
       cards,
@@ -383,6 +441,8 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       createCard,
       saveCard,
       deleteCard,
+      toggleCardVisibility,
+      setCardVisibility,
     }),
     [
       cards,
@@ -396,6 +456,8 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       createCard,
       saveCard,
       deleteCard,
+      toggleCardVisibility,
+      setCardVisibility,
     ]
   );
 

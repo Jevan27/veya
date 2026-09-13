@@ -68,6 +68,7 @@ export class CardsService {
         ? (card.socialLinks as unknown as SocialLinkDto[])
         : [],
       isPublished: card.isPublished,
+      updatedAt: card.updatedAt ? new Date(card.updatedAt).toISOString() : new Date().toISOString(),
     };
   }
 
@@ -144,7 +145,7 @@ export class CardsService {
             name: dto.name,
             role: dto.role,
             company: dto.company,
-            slogan: dto.slogan,
+            slogan: dto.slogan ? dto.slogan.trim() || null : null,
             phoneNumber: dto.phoneNumber,
             email: dto.email,
             location: dto.location,
@@ -217,7 +218,9 @@ export class CardsService {
             ...(dto.name !== undefined && { name: dto.name }),
             ...(dto.role !== undefined && { role: dto.role }),
             ...(dto.company !== undefined && { company: dto.company }),
-            ...(dto.slogan !== undefined && { slogan: dto.slogan }),
+            ...(dto.slogan !== undefined && {
+              slogan: dto.slogan ? dto.slogan.trim() || null : null,
+            }),
             ...(dto.phoneNumber !== undefined && { phoneNumber: dto.phoneNumber }),
             ...(dto.email !== undefined && { email: dto.email }),
             ...(dto.location !== undefined && { location: dto.location }),

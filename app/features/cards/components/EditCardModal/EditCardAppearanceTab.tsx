@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { CardBackgroundStyle, UserDto } from '@veya/shared';
 import { PRIMARY_COLORS, BACKGROUND_COLORS } from '../../utils/card-colors';
 import { CardColorPicker } from './CardColorPicker';
@@ -38,6 +39,8 @@ export const EditCardAppearanceTab: React.FC<EditCardAppearanceTabProps> = ({
   slogan,
   companyLogoUrl,
 }) => {
+  const [previewFlipped, setPreviewFlipped] = useState(false);
+
   return (
     <>
       {/* Typography Font Picker */}
@@ -76,6 +79,22 @@ export const EditCardAppearanceTab: React.FC<EditCardAppearanceTabProps> = ({
           <Text style={styles.previewTitle}>Live Card Preview</Text>
           <Text style={styles.previewSubtitle}>This is how your card will look.</Text>
         </View>
+
+        <TouchableOpacity
+          style={styles.previewFlipButton}
+          onPress={() => setPreviewFlipped((prev) => !prev)}
+          activeOpacity={0.7}
+        >
+          <Feather
+            name="refresh-cw"
+            size={11}
+            color="#0F172A"
+            style={{ marginRight: 4 }}
+          />
+          <Text style={styles.previewFlipText}>
+            {previewFlipped ? 'Show Front' : 'Show Back'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Miniature Business Card Preview */}
@@ -90,6 +109,7 @@ export const EditCardAppearanceTab: React.FC<EditCardAppearanceTabProps> = ({
           cardBackgroundColor={cardBackgroundColor}
           fontFamily={fontFamily}
           backgroundStyle={backgroundStyle}
+          isFlipped={previewFlipped}
           isPreviewMode
         />
       </View>
@@ -119,5 +139,20 @@ const styles = StyleSheet.create({
   previewCardWrapper: {
     marginHorizontal: -4,
     marginBottom: 16,
+  },
+  previewFlipButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  previewFlipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#0F172A',
   },
 });

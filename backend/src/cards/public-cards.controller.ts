@@ -21,6 +21,9 @@ export class PublicCardsController {
   @ApiOperation({ summary: 'Retrieve public business card presentation by ID or slug' })
   @ApiResponse({ status: 200, description: 'Public business card representation' })
   @ApiResponse({ status: 404, description: 'Card not found or unpublished' })
+  @Header('Cache-Control', 'no-cache, no-store, must-revalidate')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
   async getPublicCard(@Param('identifier') identifier: string): Promise<PublicCardDto> {
     return this.cardsService.getPublicCard(identifier);
   }
@@ -32,6 +35,9 @@ export class PublicCardsController {
   @ApiResponse({ status: 200, description: 'vCard 3.0 contact file download' })
   @ApiResponse({ status: 404, description: 'Card not found or unpublished' })
   @Header('Content-Type', 'text/vcard; charset=utf-8')
+  @Header('Cache-Control', 'no-cache, no-store, must-revalidate')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
   async getVCard(
     @Param('identifier') identifier: string,
     @Res() res: Response,

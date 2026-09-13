@@ -95,6 +95,7 @@ export interface PublicCardDto {
   backgroundStyle?: CardBackgroundStyle | null;
   socialLinks?: SocialLinkDto[] | null;
   isPublished: boolean;
+  updatedAt?: string | Date;
 }
 
 /**
@@ -106,7 +107,7 @@ export interface CreateCardDto {
   name: string;
   role?: string;
   company?: string;
-  slogan?: string;
+  slogan?: string | null;
   phoneNumber?: string;
   email?: string;
   location?: string;
@@ -132,7 +133,7 @@ export interface UpdateCardDto {
   name?: string;
   role?: string;
   company?: string;
-  slogan?: string;
+  slogan?: string | null;
   phoneNumber?: string;
   email?: string;
   location?: string;

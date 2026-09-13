@@ -1,21 +1,20 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Pressable,
   Animated,
   Alert,
+  PanResponder,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { UserDto, SocialLinkDto, CardBackgroundStyle } from '@veya/shared';
 import { isDarkColor } from '../../utils/card-colors';
 import { useCardClipboard } from '../../hooks/useCardClipboard';
 import { useCardShare } from '../../hooks/useCardShare';
-import { CardBackgroundAccent } from './CardBackgroundAccent';
-import { CardHeader } from './CardHeader';
-import { CardContactGrid } from './CardContactGrid';
 import { CardModal } from './CardModal';
+import { CardFrontFace } from './CardFrontFace';
+import { CardBackFace } from './CardBackFace';
 import { useCardFont } from '../../fonts/useCardFont';
 import { formatCardPhone } from '../../utils/phone-format';
 import { getPublicCardWebUrl } from '../../utils/card-url';
@@ -26,7 +25,7 @@ export interface VeyaCardProps {
   address?: string;
   /** Optional custom website override (default falls back to veya.app) */
   website?: string;
-  /** Optional company slogan displayed vertically on the right side of the card */
+  /** Optional company slogan displayed on the front of the card */
   slogan?: string | string[] | null;
   /** Optional custom card URL */
   cardUrl?: string;
@@ -48,6 +47,14 @@ export interface VeyaCardProps {
   backgroundStyle?: CardBackgroundStyle | null;
   /** If true, disables modal and scales down for compact preview */
   isPreviewMode?: boolean;
+  /** Controlled flipped state (false = front/company, true = back/contact) */
+  isFlipped?: boolean;
+  /** Callback when card flips */
+  onFlip?: (isFlipped: boolean) => void;
+  /** Whether the card is published/public. If false, shows private state */
+  isPublished?: boolean;
+  /** Optional callback to toggle privacy from within the card */
+  onTogglePrivacy?: () => void;
 }
 
 export const VeyaCard: React.FC<VeyaCardProps> = ({
@@ -65,14 +72,121 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
   fontFamily: customFontFamily,
   backgroundStyle = 'minimal',
   isPreviewMode = false,
+  isFlipped: isFlippedProp,
+  onFlip,
+  isPublished = true,
+  onTogglePrivacy,
 }) => {
   const [showModal, setShowModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  // Internal flip state (controlled if isFlippedProp is provided, otherwise local state)
+  const [internalFlipped, setInternalFlipped] = useState(false);
+  const isFlipped = isFlippedProp !== undefined ? isFlippedProp : internalFlipped;
+
+  // 3D Flip animation value (0deg = Front, ±180deg = Back)
+  const flipAnim = useRef(new Animated.Value(isFlipped ? 180 : 0)).current;
+  const currentAngleRef = useRef(isFlipped ? 180 : 0);
+
+  // Synchronize when isFlipped changes externally (e.g. from flip button)
+  useEffect(() => {
+    const isTargetFlipped = isFlipped;
+    const isCurrentAtBack = Math.abs(currentAngleRef.current) >= 90;
+
+    if (isTargetFlipped !== isCurrentAtBack) {
+      if (isTargetFlipped) {
+        // External flip to Back: default left-to-right (0 -> 180)
+        flipAnim.setValue(0);
+        Animated.spring(flipAnim, {
+          toValue: 180,
+          friction: 8,
+          tension: 12,
+          useNativeDriver: true,
+        }).start();
+        currentAngleRef.current = 180;
+      } else {
+        // External flip to Front: animate back to 0
+        Animated.spring(flipAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 12,
+          useNativeDriver: true,
+        }).start();
+        currentAngleRef.current = 0;
+      }
+    }
+  }, [isFlipped, flipAnim]);
+
+  /**
+   * Directional flip trigger based on swipe direction:
+   * - Swipe Left (dx < 0): turns left-to-right (angle increases towards +180 or 0)
+   * - Swipe Right (dx > 0): turns right-to-left (angle decreases towards -180 or 0)
+   */
+  const triggerFlipDirection = useCallback(
+    (direction: 'left-to-right' | 'right-to-left') => {
+      const isCurrentlyFlipped = isFlipped;
+      const nextFlipped = !isCurrentlyFlipped;
+
+      if (!isCurrentlyFlipped) {
+        // Currently on Front (angle 0)
+        if (direction === 'left-to-right') {
+          // Swipe Left -> turn left-to-right (0 -> 180)
+          flipAnim.setValue(0);
+          Animated.spring(flipAnim, {
+            toValue: 180,
+            friction: 8,
+            tension: 12,
+            useNativeDriver: true,
+          }).start();
+          currentAngleRef.current = 180;
+        } else {
+          // Swipe Right -> turn right-to-left (0 -> -180)
+          flipAnim.setValue(0);
+          Animated.spring(flipAnim, {
+            toValue: -180,
+            friction: 8,
+            tension: 12,
+            useNativeDriver: true,
+          }).start();
+          currentAngleRef.current = -180;
+        }
+      } else {
+        // Currently on Back (angle was 180 or -180)
+        if (direction === 'left-to-right') {
+          // Swipe Left -> turn left-to-right back to Front (-180 -> 0)
+          flipAnim.setValue(-180);
+          Animated.spring(flipAnim, {
+            toValue: 0,
+            friction: 8,
+            tension: 12,
+            useNativeDriver: true,
+          }).start();
+          currentAngleRef.current = 0;
+        } else {
+          // Swipe Right -> turn right-to-left back to Front (180 -> 0)
+          flipAnim.setValue(180);
+          Animated.spring(flipAnim, {
+            toValue: 0,
+            friction: 8,
+            tension: 12,
+            useNativeDriver: true,
+          }).start();
+          currentAngleRef.current = 0;
+        }
+      }
+
+      if (onFlip) {
+        onFlip(nextFlipped);
+      }
+      setInternalFlipped(nextFlipped);
+    },
+    [isFlipped, flipAnim, onFlip]
+  );
+
   // Dynamically resolve custom card typography font
   const { fontFamily: activeFontFamily } = useCardFont(customFontFamily);
 
-  // Press animation value
+  // Press scale animation value
   const scaleAnim = useRef(new Animated.Value(1)).current;
   // Toast animation value
   const toastAnim = useRef(new Animated.Value(0)).current;
@@ -117,7 +231,7 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
   const displayPhone = formatCardPhone(user?.phoneNumber);
   const displayEmail = user?.email?.trim() || 'jevan@veya.app';
 
-  // Optional slogan lines for the right side of the card
+  // Optional slogan lines for the front side of the card
   const sloganLines = useMemo(() => {
     if (typeof slogan === 'string') {
       return slogan.split('\n').map((s) => s.trim()).filter(Boolean);
@@ -179,6 +293,46 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
     }
   }, [isPreviewMode, onPress]);
 
+  // PanResponder for horizontal swipe gesture detection vs. tap
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: (_evt, gestureState) => {
+          return (
+            Math.abs(gestureState.dx) > 12 &&
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.4
+          );
+        },
+        onPanResponderGrant: () => {
+          if (!isPreviewMode) handlePressIn();
+        },
+        onPanResponderRelease: (_evt, gestureState) => {
+          if (!isPreviewMode) handlePressOut();
+          if (Math.abs(gestureState.dx) >= 35) {
+            // Horizontal swipe gesture detected!
+            if (gestureState.dx < 0) {
+              // Swipe LEFT: turn right-to-left
+              triggerFlipDirection('right-to-left');
+            } else {
+              // Swipe RIGHT: turn left-to-right
+              triggerFlipDirection('left-to-right');
+            }
+          } else if (
+            Math.abs(gestureState.dx) < 12 &&
+            Math.abs(gestureState.dy) < 12
+          ) {
+            // Minimal movement tap -> Open modal / trigger onPress
+            handleCardPress();
+          }
+        },
+        onPanResponderTerminate: () => {
+          if (!isPreviewMode) handlePressOut();
+        },
+      }),
+    [isPreviewMode, handlePressIn, handlePressOut, triggerFlipDirection, handleCardPress]
+  );
+
   const handleShareAction = useCallback(() => {
     shareCard(displayName, cardUrl);
   }, [shareCard, displayName, cardUrl]);
@@ -223,6 +377,28 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
 
   const isDarkBg = isDarkColor(cardBackgroundColor);
 
+  // 3D rotation interpolations supporting both positive and negative rotation angles
+  const frontInterpolate = flipAnim.interpolate({
+    inputRange: [-180, -90, -89, 0, 89, 90, 180],
+    outputRange: ['-180deg', '-90deg', '-89deg', '0deg', '89deg', '90deg', '180deg'],
+  });
+
+  const backInterpolate = flipAnim.interpolate({
+    inputRange: [-180, -90, -89, 0, 89, 90, 180],
+    outputRange: ['0deg', '90deg', '91deg', '180deg', '269deg', '270deg', '360deg'],
+  });
+
+  // Sharp opacity toggle at 90-degree midpoint in both directions
+  const frontOpacity = flipAnim.interpolate({
+    inputRange: [-180, -90, -89, 0, 89, 90, 180],
+    outputRange: [0, 0, 1, 1, 1, 0, 0],
+  });
+
+  const backOpacity = flipAnim.interpolate({
+    inputRange: [-180, -90, -89, 0, 89, 90, 180],
+    outputRange: [1, 1, 0, 0, 0, 1, 1],
+  });
+
   return (
     <>
       <Animated.View
@@ -231,68 +407,74 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
           isPreviewMode && { marginVertical: 4 },
           { transform: [{ scale: scaleAnim }] },
         ]}
+        {...(isPreviewMode ? {} : panResponder.panHandlers)}
       >
         <View
           ref={cardSnapshotRef}
           collapsable={false}
           style={styles.snapshotContainer}
         >
-          <Pressable
-            onPress={handleCardPress}
-            onPressIn={isPreviewMode ? undefined : handlePressIn}
-            onPressOut={isPreviewMode ? undefined : handlePressOut}
+          {/* FRONT FACE: COMPANY & SOCIAL LINKS */}
+          <Animated.View
             style={[
-              styles.cardContainer,
+              styles.cardFace,
               {
-                backgroundColor: cardBackgroundColor,
-                borderColor: isDarkBg ? 'rgba(255, 255, 255, 0.14)' : '#EEF2F6',
+                opacity: frontOpacity,
+                transform: [
+                  { perspective: 1200 },
+                  { rotateY: frontInterpolate },
+                ],
               },
             ]}
-            accessibilityRole="button"
-            accessibilityLabel="Digital business card. Tap to view QR code and sharing options."
+            pointerEvents={isFlipped ? 'none' : 'auto'}
           >
-            {/* Visual Background Composition Style */}
-            <CardBackgroundAccent
-              styleName={backgroundStyle}
+            <CardFrontFace
+              company={displayCompany}
+              companyLogoUrl={companyLogoUrl}
+              sloganLines={sloganLines}
+              website={website}
+              socialLinks={socialLinks}
               primaryColor={primaryColor}
               cardBackgroundColor={cardBackgroundColor}
               isDarkBg={isDarkBg}
+              fontFamily={activeFontFamily}
+              backgroundStyle={backgroundStyle}
             />
+          </Animated.View>
 
-            {/* UPPER SECTION: IDENTITY */}
-            <CardHeader
+          {/* BACK FACE: PERSONAL CONTACT GRID */}
+          <Animated.View
+            style={[
+              styles.cardFace,
+              styles.cardFaceBack,
+              {
+                opacity: backOpacity,
+                transform: [
+                  { perspective: 1200 },
+                  { rotateY: backInterpolate },
+                ],
+              },
+            ]}
+            pointerEvents={isFlipped ? 'auto' : 'none'}
+          >
+            <CardBackFace
               displayName={displayName}
               displayRole={displayRole}
               displayCompany={displayCompany}
               avatarUrl={user?.avatarUrl}
               initials={initials}
               companyLogoUrl={companyLogoUrl}
-              sloganLines={sloganLines}
-              primaryColor={primaryColor}
-              isDarkBg={isDarkBg}
-              fontFamily={activeFontFamily}
-            />
-
-            {/* Subtle Horizontal Divider */}
-            <View
-              style={[
-                styles.divider,
-                { backgroundColor: isDarkBg ? 'rgba(255, 255, 255, 0.12)' : '#F1F5F9' },
-              ]}
-            />
-
-            {/* LOWER SECTION: 2x2 CONTACT GRID */}
-            <CardContactGrid
               phone={displayPhone}
               email={displayEmail}
               address={address}
               website={website}
               primaryColor={primaryColor}
+              cardBackgroundColor={cardBackgroundColor}
               isDarkBg={isDarkBg}
               fontFamily={activeFontFamily}
-              socialLinks={socialLinks}
+              backgroundStyle={backgroundStyle}
             />
-          </Pressable>
+          </Animated.View>
         </View>
       </Animated.View>
 
@@ -353,32 +535,21 @@ const styles = StyleSheet.create({
     aspectRatio: 1.72,
     marginVertical: 12,
   },
-  cardContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 14,
-    borderWidth: 1,
-    borderColor: '#EEF2F6',
-    position: 'relative',
-    overflow: 'hidden',
-    justifyContent: 'space-between',
-    // Premium soft elevation
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 4,
-  },
-  divider: {
-    height: 1,
-    width: '100%',
-    marginVertical: 4,
-  },
   snapshotContainer: {
     flex: 1,
+    position: 'relative',
+  },
+  cardFace: {
+    width: '100%',
+    height: '100%',
+    backfaceVisibility: 'hidden',
+  },
+  cardFaceBack: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   bottomToastContainer: {
     position: 'absolute',
