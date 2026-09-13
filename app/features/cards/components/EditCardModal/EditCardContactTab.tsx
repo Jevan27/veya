@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { Feather } from '@expo/vector-icons';
 import { CountryItem } from '../../../onboarding/constants/countries';
 import { CountryPickerModal } from '../../../onboarding/components/CountryPickerModal';
+import { SocialLinkDto } from '@veya/shared';
+import { SocialLinksManager } from './SocialLinksManager';
 import {
   formatNationalPhoneNumber,
   parsePhoneNumber,
@@ -14,10 +16,12 @@ interface EditCardContactTabProps {
   email: string;
   location: string;
   website: string;
+  socialLinks?: SocialLinkDto[];
   onChangePhoneNumber: (val: string) => void;
   onChangeEmail: (val: string) => void;
   onChangeLocation: (val: string) => void;
   onChangeWebsite: (val: string) => void;
+  onChangeSocialLinks: (links: SocialLinkDto[]) => void;
 }
 
 export const EditCardContactTab: React.FC<EditCardContactTabProps> = ({
@@ -25,10 +29,12 @@ export const EditCardContactTab: React.FC<EditCardContactTabProps> = ({
   email,
   location,
   website,
+  socialLinks = [],
   onChangePhoneNumber,
   onChangeEmail,
   onChangeLocation,
   onChangeWebsite,
+  onChangeSocialLinks,
 }) => {
   const initialParsed = parsePhoneNumber(phoneNumber);
   const [selectedCountry, setSelectedCountry] = useState<CountryItem>(initialParsed.country);
@@ -157,6 +163,12 @@ export const EditCardContactTab: React.FC<EditCardContactTabProps> = ({
           placeholderTextColor="#94A3B8"
         />
       </View>
+
+      {/* Social Links */}
+      <SocialLinksManager
+        socialLinks={socialLinks}
+        onChangeSocialLinks={onChangeSocialLinks}
+      />
     </>
   );
 };

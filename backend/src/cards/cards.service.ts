@@ -4,11 +4,12 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
-import { CardDto, PublicCardDto } from '@veya/shared';
-import { BusinessCard } from '@prisma/client';
+import { CardDto, PublicCardDto, SocialLinkDto, CardBackgroundStyle, detectSocialPlatform } from '@veya/shared';
+import { BusinessCard, Prisma } from '@prisma/client';
 
 @Injectable()
 export class CardsService {
@@ -33,6 +34,10 @@ export class CardsService {
       primaryColor: card.primaryColor,
       cardBackgroundColor: card.cardBackgroundColor,
       fontFamily: card.fontFamily ?? 'inter',
+      backgroundStyle: (card.backgroundStyle as CardBackgroundStyle) ?? 'minimal',
+      socialLinks: Array.isArray(card.socialLinks)
+        ? (card.socialLinks as unknown as SocialLinkDto[])
+        : [],
       isDefault: card.isDefault,
       isPublished: card.isPublished,
       slug: card.slug,
@@ -58,8 +63,46 @@ export class CardsService {
       primaryColor: card.primaryColor,
       cardBackgroundColor: card.cardBackgroundColor,
       fontFamily: card.fontFamily ?? 'inter',
+      backgroundStyle: (card.backgroundStyle as CardBackgroundStyle) ?? 'minimal',
+      socialLinks: Array.isArray(card.socialLinks)
+        ? (card.socialLinks as unknown as SocialLinkDto[])
+        : [],
       isPublished: card.isPublished,
     };
+  }
+
+  /**
+   * Checks if an error is a Prisma unique constraint violation (P2002).
+   */
+  /**
+   * Sanitizes, validates, and normalizes social links server-side.
+   * Derives platform from URL to prevent client spoofing.
+   */
+  private sanitizeSocialLinks(rawLinks?: SocialLinkDto[] | null): SocialLinkDto[] {
+    if (!rawLinks || !Array.isArray(rawLinks)) {
+      return [];
+    }
+
+    const sanitized: SocialLinkDto[] = [];
+    let orderIndex = 0;
+
+    for (const link of rawLinks) {
+      if (!link || !link.url) continue;
+      const detected = detectSocialPlatform(link.url);
+      if (!detected) {
+        continue;
+      }
+      sanitized.push({
+        id: link.id || randomUUID(),
+        platform: detected.platform,
+        url: detected.normalizedUrl,
+        label: link.label ? link.label.trim() : null,
+        displayOrder: typeof link.displayOrder === 'number' ? link.displayOrder : orderIndex,
+      });
+      orderIndex++;
+    }
+
+    return sanitized.sort((a, b) => a.displayOrder - b.displayOrder);
   }
 
   /**
@@ -111,6 +154,10 @@ export class CardsService {
             primaryColor: dto.primaryColor || '#111111',
             cardBackgroundColor: dto.cardBackgroundColor || '#FFFFFF',
             fontFamily: dto.fontFamily || 'inter',
+            backgroundStyle: dto.backgroundStyle || 'minimal',
+            socialLinks: dto.socialLinks
+              ? (this.sanitizeSocialLinks(dto.socialLinks) as unknown as Prisma.InputJsonValue)
+              : [],
             isDefault,
             isPublished: dto.isPublished !== undefined ? dto.isPublished : true,
             slug: dto.slug || null,
@@ -182,6 +229,10 @@ export class CardsService {
               cardBackgroundColor: dto.cardBackgroundColor,
             }),
             ...(dto.fontFamily !== undefined && { fontFamily: dto.fontFamily }),
+            ...(dto.backgroundStyle !== undefined && { backgroundStyle: dto.backgroundStyle }),
+            ...(dto.socialLinks !== undefined && {
+              socialLinks: this.sanitizeSocialLinks(dto.socialLinks) as unknown as Prisma.InputJsonValue,
+            }),
             ...(dto.isDefault !== undefined && { isDefault: dto.isDefault }),
             ...(dto.isPublished !== undefined && { isPublished: dto.isPublished }),
             ...(dto.slug !== undefined && { slug: dto.slug || null }),

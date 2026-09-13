@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { UserDto } from '@veya/shared';
+import { UserDto, SocialLinkDto, CardBackgroundStyle } from '@veya/shared';
 import { EditCardData, EditCardTab } from '../types/card-form.types';
 import { formatCardPhone } from '../utils/phone-format';
 
@@ -29,6 +29,8 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
   const [primaryColor, setPrimaryColor] = useState(cardData.primaryColor || '#111111');
   const [cardBackgroundColor, setCardBackgroundColor] = useState(cardData.cardBackgroundColor || '#FFFFFF');
   const [fontFamily, setFontFamily] = useState(cardData.fontFamily || 'inter');
+  const [backgroundStyle, setBackgroundStyle] = useState<CardBackgroundStyle>(cardData.backgroundStyle || 'minimal');
+  const [socialLinks, setSocialLinks] = useState<SocialLinkDto[]>(cardData.socialLinks || []);
   const [activeTab, setActiveTab] = useState<EditCardTab>('personal');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -49,6 +51,8 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
       setPrimaryColor(cardData.primaryColor || '#111111');
       setCardBackgroundColor(cardData.cardBackgroundColor || '#FFFFFF');
       setFontFamily(cardData.fontFamily || 'inter');
+      setBackgroundStyle(cardData.backgroundStyle || 'minimal');
+      setSocialLinks(cardData.socialLinks || []);
     }
   }, [visible, cardData]);
 
@@ -142,6 +146,8 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
         primaryColor,
         cardBackgroundColor,
         fontFamily,
+        backgroundStyle,
+        socialLinks,
       });
       onSuccess();
     } catch (err: unknown) {
@@ -164,6 +170,8 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
     primaryColor,
     cardBackgroundColor,
     fontFamily,
+    backgroundStyle,
+    socialLinks,
     onSave,
     onSuccess,
   ]);
@@ -200,6 +208,8 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
       primaryColor,
       cardBackgroundColor,
       fontFamily,
+      backgroundStyle,
+      socialLinks,
     },
     setters: {
       setName,
@@ -215,6 +225,8 @@ export function useCardForm({ visible, cardData, onSave, onSuccess }: UseCardFor
       setPrimaryColor,
       setCardBackgroundColor,
       setFontFamily,
+      setBackgroundStyle,
+      setSocialLinks,
     },
     activeTab,
     setActiveTab,

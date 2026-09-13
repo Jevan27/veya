@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { SocialLinkDto } from '@veya/shared';
+import { SocialIcon } from '../SocialIcon';
 
 interface CardContactGridProps {
   phone: string;
@@ -10,6 +12,7 @@ interface CardContactGridProps {
   primaryColor?: string;
   isDarkBg: boolean;
   fontFamily?: string;
+  socialLinks?: SocialLinkDto[] | null;
 }
 
 export const CardContactGrid: React.FC<CardContactGridProps> = ({
@@ -20,6 +23,7 @@ export const CardContactGrid: React.FC<CardContactGridProps> = ({
   primaryColor = '#111111',
   isDarkBg,
   fontFamily,
+  socialLinks,
 }) => {
   const customFont = fontFamily ? { fontFamily } : undefined;
 
@@ -118,6 +122,27 @@ export const CardContactGrid: React.FC<CardContactGridProps> = ({
           </Text>
         </View>
       </View>
+
+      {/* Row 3: Social Links Icons Row (if configured) */}
+      {socialLinks && socialLinks.length > 0 && (
+        <View style={styles.socialRow}>
+          {socialLinks.slice(0, 7).map((link) => (
+            <View
+              key={link.id}
+              style={[
+                styles.socialChip,
+                isDarkBg && { backgroundColor: 'rgba(255, 255, 255, 0.08)' },
+              ]}
+            >
+              <SocialIcon
+                platform={link.platform}
+                size={12}
+                color={isDarkBg ? '#E2E8F0' : primaryColor}
+              />
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 };
@@ -126,6 +151,20 @@ const styles = StyleSheet.create({
   lowerSection: {
     zIndex: 1,
     paddingTop: 4,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  socialChip: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   contactRow: {
     flexDirection: 'row',

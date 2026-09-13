@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { CardBackgroundStyle } from '@veya/shared';
+import { CardBackgroundAccent } from '../../cards/components/VeyaCard/CardBackgroundAccent';
 
 interface CardPreviewProps {
   fullName: string;
@@ -8,6 +10,7 @@ interface CardPreviewProps {
   company?: string;
   photoUri: string | null;
   phoneNumber?: string | null;
+  backgroundStyle?: CardBackgroundStyle;
 }
 
 export const CardPreview: React.FC<CardPreviewProps> = ({
@@ -16,6 +19,7 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
   company,
   photoUri,
   phoneNumber,
+  backgroundStyle = 'minimal',
 }) => {
   const displayName = fullName.trim() || 'Your Name';
   const displayRole = role.trim() || 'Professional Role';
@@ -31,6 +35,14 @@ export const CardPreview: React.FC<CardPreviewProps> = ({
 
   return (
     <View style={styles.cardContainer}>
+      {/* Background Accent SVG */}
+      <CardBackgroundAccent
+        styleName={backgroundStyle}
+        primaryColor="#111111"
+        cardBackgroundColor="#FFFFFF"
+        isDarkBg={false}
+      />
+
       {/* Top Card Bar */}
       <View style={styles.cardHeader}>
         <View style={styles.brandRow}>
@@ -116,6 +128,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
     marginVertical: 12,
+    position: 'relative',
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',

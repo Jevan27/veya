@@ -71,7 +71,7 @@ export default function ProfileScreen() {
                 title="Let's create your profile."
                 subtitle="This information will become the foundation of your Veya identity."
                 currentStep={1}
-                totalSteps={4}
+                totalSteps={5}
                 onBack={handleBack}
               />
 

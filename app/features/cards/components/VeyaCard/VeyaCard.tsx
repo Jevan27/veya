@@ -8,11 +8,11 @@ import {
   Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { UserDto } from '@veya/shared';
+import { UserDto, SocialLinkDto, CardBackgroundStyle } from '@veya/shared';
 import { isDarkColor } from '../../utils/card-colors';
 import { useCardClipboard } from '../../hooks/useCardClipboard';
 import { useCardShare } from '../../hooks/useCardShare';
-import { CardWaveAccent } from './CardWaveAccent';
+import { CardBackgroundAccent } from './CardBackgroundAccent';
 import { CardHeader } from './CardHeader';
 import { CardContactGrid } from './CardContactGrid';
 import { CardModal } from './CardModal';
@@ -30,6 +30,8 @@ export interface VeyaCardProps {
   slogan?: string | string[] | null;
   /** Optional custom card URL */
   cardUrl?: string;
+  /** Optional social media profile links */
+  socialLinks?: SocialLinkDto[] | null;
   /** Optional custom press handler (if not provided, opens the QR modal) */
   onPress?: () => void;
   /** Optional callback when tapping the Edit button in the modal */
@@ -42,6 +44,8 @@ export interface VeyaCardProps {
   cardBackgroundColor?: string;
   /** Optional custom font family identifier (e.g. 'inter', 'playfair-display', 'poppins', etc.) */
   fontFamily?: string | null;
+  /** Optional background visual composition style */
+  backgroundStyle?: CardBackgroundStyle | null;
   /** If true, disables modal and scales down for compact preview */
   isPreviewMode?: boolean;
 }
@@ -52,12 +56,14 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
   website = 'www.veya.app',
   slogan,
   cardUrl: customCardUrl,
+  socialLinks,
   onPress,
   onEdit,
   companyLogoUrl,
   primaryColor = '#111111',
   cardBackgroundColor = '#FFFFFF',
   fontFamily: customFontFamily,
+  backgroundStyle = 'minimal',
   isPreviewMode = false,
 }) => {
   const [showModal, setShowModal] = useState(false);
@@ -245,8 +251,13 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Digital business card. Tap to view QR code and sharing options."
           >
-            {/* Top-Right Decorative Blue/Purple Gradient Curve */}
-            <CardWaveAccent primaryColor={primaryColor} />
+            {/* Visual Background Composition Style */}
+            <CardBackgroundAccent
+              styleName={backgroundStyle}
+              primaryColor={primaryColor}
+              cardBackgroundColor={cardBackgroundColor}
+              isDarkBg={isDarkBg}
+            />
 
             {/* UPPER SECTION: IDENTITY */}
             <CardHeader
@@ -279,6 +290,7 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
               primaryColor={primaryColor}
               isDarkBg={isDarkBg}
               fontFamily={activeFontFamily}
+              socialLinks={socialLinks}
             />
           </Pressable>
         </View>
@@ -291,6 +303,7 @@ export const VeyaCard: React.FC<VeyaCardProps> = ({
           onClose={() => setShowModal(false)}
           cardUrl={cardUrl}
           qrCodeUrl={qrCodeUrl}
+          socialLinks={socialLinks}
           onEdit={handleEdit}
           onShare={handleShareAction}
           onCopyLink={handleCopyLinkAction}

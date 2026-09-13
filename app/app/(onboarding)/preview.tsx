@@ -16,6 +16,7 @@ export default function PreviewScreen() {
     photoUri,
     phoneNumber,
     country,
+    backgroundStyle,
     completeOnboarding,
     isSaving,
     error,
@@ -53,8 +54,8 @@ export default function PreviewScreen() {
             <OnboardingHeader
               title="Your Veya is taking shape."
               subtitle="Here is how your digital business card appears to anyone you connect with."
-              currentStep={4}
-              totalSteps={4}
+              currentStep={5}
+              totalSteps={5}
               onBack={handleBack}
             />
 
@@ -72,6 +73,7 @@ export default function PreviewScreen() {
               company={company}
               photoUri={photoUri}
               phoneNumber={formattedPhone}
+              backgroundStyle={backgroundStyle}
             />
           </View>
 

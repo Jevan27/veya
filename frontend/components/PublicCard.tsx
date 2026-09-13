@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, Globe } from 'lucide-react';
 import { PublicCardDto } from '@veya/shared';
+import { SocialIcon } from './SocialIcon';
+import { PublicCardBackground } from './PublicCardBackground';
 
 interface PublicCardProps {
   card: PublicCardDto;
@@ -98,24 +100,13 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
         color: textColor,
       }}
     >
-      {/* Decorative Wave Accent Curve */}
-      <svg
-        className="card-wave-svg"
-        viewBox="0 0 140 90"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M0 0C40 25 90 20 140 90V0H0Z"
-          fill={primaryColor}
-          fillOpacity={isDark ? 0.22 : 0.12}
-        />
-        <path
-          d="M30 0C70 15 110 30 140 70V0H30Z"
-          fill={primaryColor}
-          fillOpacity={isDark ? 0.35 : 0.2}
-        />
-      </svg>
+      {/* Visual Background Accent (Dynamic 5-Style Composition) */}
+      <PublicCardBackground
+        backgroundStyle={card.backgroundStyle}
+        primaryColor={primaryColor}
+        cardBackgroundColor={bgColor}
+        isDark={isDark}
+      />
 
       <div className="card-inner">
         {/* Upper Identity Row */}
@@ -249,6 +240,29 @@ export const PublicCard: React.FC<PublicCardProps> = ({ card }) => {
             </a>
           )}
         </div>
+
+        {/* Social Profile Links Row */}
+        {card.socialLinks && card.socialLinks.length > 0 && (
+          <div className="card-social-links-row">
+            {card.socialLinks.map((link) => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card-social-link-chip"
+                style={{
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+                  color: isDark ? '#FFFFFF' : primaryColor,
+                }}
+                title={link.label || link.platform}
+                aria-label={`Open ${link.platform} profile`}
+              >
+                <SocialIcon platform={link.platform} size={15} />
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

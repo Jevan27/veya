@@ -200,10 +200,12 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
                   email={formState.email}
                   location={formState.location}
                   website={formState.website}
+                  socialLinks={formState.socialLinks || []}
                   onChangePhoneNumber={setters.setPhoneNumber}
                   onChangeEmail={setters.setEmail}
                   onChangeLocation={setters.setLocation}
                   onChangeWebsite={setters.setWebsite}
+                  onChangeSocialLinks={setters.setSocialLinks}
                 />
               )}
 
@@ -212,9 +214,11 @@ export const EditCardModal: React.FC<EditCardModalProps> = ({
                   primaryColor={formState.primaryColor}
                   cardBackgroundColor={formState.cardBackgroundColor}
                   fontFamily={formState.fontFamily}
+                  backgroundStyle={formState.backgroundStyle}
                   onSelectPrimaryColor={setters.setPrimaryColor}
                   onSelectCardBackgroundColor={setters.setCardBackgroundColor}
                   onSelectFontFamily={setters.setFontFamily}
+                  onSelectBackgroundStyle={setters.setBackgroundStyle}
                   previewUser={previewUser}
                   location={formState.location}
                   website={formState.website}

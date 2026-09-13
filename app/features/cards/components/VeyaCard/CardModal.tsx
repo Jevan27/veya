@@ -7,15 +7,19 @@ import {
   Pressable,
   Modal,
   Animated,
+  Linking,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { SocialLinkDto } from '@veya/shared';
 import { CardQRCode } from './CardQRCode';
+import { SocialIcon } from '../SocialIcon';
 
 interface CardModalProps {
   visible: boolean;
   onClose: () => void;
   cardUrl: string;
   qrCodeUrl: string;
+  socialLinks?: SocialLinkDto[] | null;
   onEdit: () => void;
   onShare: () => void;
   onCopyLink: () => void;
@@ -31,6 +35,7 @@ export const CardModal: React.FC<CardModalProps> = ({
   onClose,
   cardUrl,
   qrCodeUrl,
+  socialLinks,
   onEdit,
   onShare,
   onCopyLink,
@@ -154,6 +159,27 @@ export const CardModal: React.FC<CardModalProps> = ({
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Social Profiles Row */}
+          {socialLinks && socialLinks.length > 0 && (
+            <View style={styles.modalSocialSection}>
+              <Text style={styles.modalSocialHeading}>Connect & Follow</Text>
+              <View style={styles.modalSocialIconsRow}>
+                {socialLinks.map((link) => (
+                  <TouchableOpacity
+                    key={link.id}
+                    style={styles.modalSocialChip}
+                    onPress={() => Linking.openURL(link.url)}
+                    activeOpacity={0.7}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Open ${link.platform} link`}
+                  >
+                    <SocialIcon platform={link.platform} size={16} color="#0F172A" />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
         </Pressable>
 
         {/* Bottom Toast Notification (Inside Modal) */}
@@ -316,5 +342,38 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: -0.2,
+  },
+  modalSocialSection: {
+    marginTop: 18,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    alignItems: 'center',
+    width: '100%',
+  },
+  modalSocialHeading: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  modalSocialIconsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  modalSocialChip: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#EEF2F6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

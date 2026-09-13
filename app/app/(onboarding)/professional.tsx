@@ -50,7 +50,7 @@ export default function ProfessionalScreen() {
                 title="Tell people what you do."
                 subtitle="Your professional information helps people understand who they're connecting with."
                 currentStep={2}
-                totalSteps={4}
+                totalSteps={5}
                 onBack={handleBack}
               />
 

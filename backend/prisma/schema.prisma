@@ -49,6 +49,8 @@ model BusinessCard {
   primaryColor        String?  @default("#111111") @map("primary_color")
   cardBackgroundColor String?  @default("#FFFFFF") @map("card_background_color")
   fontFamily          String?  @default("inter") @map("font_family")
+  backgroundStyle     String?  @default("minimal") @map("background_style")
+  socialLinks         Json?    @default("[]") @map("social_links")
   isDefault           Boolean  @default(false) @map("is_default")
   isPublished         Boolean  @default(true) @map("is_published")
   slug                String?  @unique

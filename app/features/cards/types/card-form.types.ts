@@ -1,3 +1,5 @@
+import { SocialLinkDto, CardBackgroundStyle } from '@veya/shared';
+
 export interface EditCardData {
   name: string;
   role: string;
@@ -12,6 +14,8 @@ export interface EditCardData {
   primaryColor: string;
   cardBackgroundColor: string;
   fontFamily: string;
+  backgroundStyle?: CardBackgroundStyle;
+  socialLinks?: SocialLinkDto[] | null;
 }
 
 /**

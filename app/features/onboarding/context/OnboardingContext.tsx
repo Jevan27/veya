@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { CardBackgroundStyle } from '@veya/shared';
 import { usersApi } from '../../../services/api/users.api';
+import { cardsApi } from '../../../services/api/cards.api';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { CountryItem, DEFAULT_COUNTRY } from '../constants/countries';
 
@@ -18,6 +20,8 @@ export interface OnboardingContextValue {
   photoBase64: string | null;
   setPhoto: (uri: string | null, base64?: string | null) => void;
   setPhotoUri: (uri: string | null) => void;
+  backgroundStyle: CardBackgroundStyle;
+  setBackgroundStyle: (style: CardBackgroundStyle) => void;
   isSaving: boolean;
   error: string | null;
   clearError: () => void;
@@ -37,6 +41,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [role, setRole] = useState<string>(user?.role || '');
   const [photoUri, setPhotoUri] = useState<string | null>(user?.avatarUrl || null);
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
+  const [backgroundStyle, setBackgroundStyle] = useState<CardBackgroundStyle>('minimal');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,6 +88,30 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         phoneNumber: formattedPhone,
       });
 
+      // Persist card background style chosen during onboarding
+      try {
+        const existingCards = await cardsApi.getCards();
+        if (!existingCards || existingCards.length === 0) {
+          await cardsApi.createCard({
+            name: fullName.trim() || 'My Card',
+            role: role.trim() || undefined,
+            company: company.trim() || undefined,
+            phoneNumber: formattedPhone,
+            avatarUrl: finalAvatarUrl || undefined,
+            backgroundStyle,
+          });
+        } else {
+          const defaultCard = existingCards.find((c) => c.isDefault) || existingCards[0];
+          if (defaultCard) {
+            await cardsApi.updateCard(defaultCard.id, {
+              backgroundStyle,
+            });
+          }
+        }
+      } catch (cardErr) {
+        console.warn('[OnboardingContext] Error persisting card backgroundStyle:', cardErr);
+      }
+
       const response = await usersApi.completeOnboarding();
       updateUser(response.user);
     } catch (err) {
@@ -93,7 +122,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } finally {
       setIsSaving(false);
     }
-  }, [fullName, phoneNumber, country, company, role, photoUri, photoBase64, updateUser]);
+  }, [fullName, phoneNumber, country, company, role, photoUri, photoBase64, backgroundStyle, updateUser]);
 
   const skipOnboarding = useCallback(async () => {
     setIsSaving(true);
@@ -124,6 +153,8 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       photoBase64,
       setPhoto,
       setPhotoUri,
+      backgroundStyle,
+      setBackgroundStyle,
       isSaving,
       error,
       clearError,
@@ -138,6 +169,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       role,
       photoUri,
       photoBase64,
+      backgroundStyle,
       setPhoto,
       isSaving,
       error,

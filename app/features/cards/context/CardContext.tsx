@@ -72,6 +72,8 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       primaryColor: primaryCard.primaryColor || '#111111',
       cardBackgroundColor: primaryCard.cardBackgroundColor || '#FFFFFF',
       fontFamily: primaryCard.fontFamily || 'inter',
+      backgroundStyle: primaryCard.backgroundStyle || 'minimal',
+      socialLinks: primaryCard.socialLinks || [],
     };
   }, []);
 
@@ -105,6 +107,8 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         primaryColor: '#111111',
         cardBackgroundColor: '#FFFFFF',
         fontFamily: 'inter',
+        backgroundStyle: 'minimal',
+        socialLinks: [],
       };
     }
     return null;
@@ -227,6 +231,8 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           primaryColor: newCardData.primaryColor,
           cardBackgroundColor: newCardData.cardBackgroundColor,
           fontFamily: newCardData.fontFamily,
+          backgroundStyle: newCardData.backgroundStyle || 'minimal',
+          socialLinks: newCardData.socialLinks || [],
           isDefault: cards.length === 0,
         });
 
@@ -300,6 +306,8 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             primaryColor: mergedData.primaryColor,
             cardBackgroundColor: mergedData.cardBackgroundColor,
             fontFamily: mergedData.fontFamily,
+            backgroundStyle: mergedData.backgroundStyle || 'minimal',
+            socialLinks: mergedData.socialLinks || [],
           });
 
           // Update only the targeted card in the cards list
@@ -320,6 +328,8 @@ export const CardProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             primaryColor: mergedData.primaryColor,
             cardBackgroundColor: mergedData.cardBackgroundColor,
             fontFamily: mergedData.fontFamily,
+            backgroundStyle: mergedData.backgroundStyle || 'minimal',
+            socialLinks: mergedData.socialLinks || [],
             isDefault: true,
           });
 

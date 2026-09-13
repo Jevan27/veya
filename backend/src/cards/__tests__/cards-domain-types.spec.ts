@@ -53,6 +53,8 @@ describe('Cards Domain Types & Normalization', () => {
         primaryColor: '#111111',
         cardBackgroundColor: '#FFFFFF',
         fontFamily: 'inter',
+        backgroundStyle: 'flow',
+        socialLinks: [],
         isDefault: true,
         isPublished: true,
         slug: 'jevan-veya',
@@ -77,6 +79,7 @@ describe('Cards Domain Types & Normalization', () => {
       expect(dto.primaryColor).toBe('#111111');
       expect(dto.cardBackgroundColor).toBe('#FFFFFF');
       expect(dto.fontFamily).toBe('inter');
+      expect(dto.backgroundStyle).toBe('flow');
       expect(dto.isDefault).toBe(true);
       expect(dto.createdAt).toBe('2026-03-01T12:00:00.000Z');
       expect(dto.updatedAt).toBe('2026-03-02T15:30:00.000Z');
@@ -104,6 +107,8 @@ describe('Cards Domain Types & Normalization', () => {
         primaryColor: null,
         cardBackgroundColor: null,
         fontFamily: null,
+        backgroundStyle: null,
+        socialLinks: null,
         isDefault: false,
         isPublished: true,
         slug: null,
@@ -117,6 +122,7 @@ describe('Cards Domain Types & Normalization', () => {
       expect(dto.role).toBeNull();
       expect(dto.company).toBeNull();
       expect(dto.avatarUrl).toBeNull();
+      expect(dto.backgroundStyle).toBe('minimal');
       expect(dto.isDefault).toBe(false);
     });
   });
@@ -205,6 +211,8 @@ describe('Cards Domain Types & Normalization', () => {
         primaryColor: '#111111',
         cardBackgroundColor: '#FFFFFF',
         fontFamily: null,
+        backgroundStyle: 'minimal',
+        socialLinks: [],
         isDefault: true,
         isPublished: true,
         slug: null,
@@ -240,6 +248,58 @@ describe('Cards Domain Types & Normalization', () => {
 
       const dto = cardsService.toCardDto(cardWithCustomFont);
       expect(dto.fontFamily).toBe('playfair-display');
+    });
+  });
+
+  describe('Background Style Fallback & DTO Validation', () => {
+    it('should fallback to minimal if entity has null backgroundStyle', () => {
+      const cardWithoutBg: BusinessCard = {
+        id: 'card-no-bg',
+        userId: 'user-1',
+        name: 'No Bg User',
+        role: null,
+        company: null,
+        slogan: null,
+        phoneNumber: null,
+        email: null,
+        location: null,
+        website: null,
+        avatarUrl: null,
+        companyLogoUrl: null,
+        primaryColor: '#111111',
+        cardBackgroundColor: '#FFFFFF',
+        fontFamily: 'inter',
+        backgroundStyle: null,
+        socialLinks: [],
+        isDefault: true,
+        isPublished: true,
+        slug: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const dto = cardsService.toCardDto(cardWithoutBg);
+      expect(dto.backgroundStyle).toBe('minimal');
+    });
+
+    it('should validate valid background styles on CreateCardDto', async () => {
+      const dto = new CreateCardDto();
+      dto.name = 'Valid User';
+      dto.backgroundStyle = 'dot-fade';
+
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should reject invalid background styles on CreateCardDto', async () => {
+      const dto = new CreateCardDto();
+      dto.name = 'Invalid User';
+      // @ts-expect-error invalid background style for testing
+      dto.backgroundStyle = 'invalid_style';
+
+      const errors = await validate(dto);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('backgroundStyle');
     });
   });
 });

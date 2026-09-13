@@ -40,6 +40,8 @@ describe('Cards Authorization & Controller CRUD', () => {
     primaryColor: '#1E40AF',
     cardBackgroundColor: '#FFFFFF',
     fontFamily: 'inter',
+    backgroundStyle: 'minimal',
+    socialLinks: [],
     isDefault: true,
     isPublished: true,
     slug: null,

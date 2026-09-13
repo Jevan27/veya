@@ -1,23 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { OnboardingHeader } from '../../features/onboarding/components/OnboardingHeader';
-import { ProfilePhotoPicker } from '../../features/onboarding/components/ProfilePhotoPicker';
+import { CardStyleSelector } from '../../features/onboarding/components/CardStyleSelector';
 import { AuthButton } from '../../features/auth/components/AuthButton';
 import { useOnboarding } from '../../features/onboarding/context/OnboardingContext';
 
-export default function PhotoScreen() {
+export default function StyleScreen() {
   const router = useRouter();
-  const { photoUri, setPhoto } = useOnboarding();
+  const { backgroundStyle, setBackgroundStyle } = useOnboarding();
 
   const handleContinue = () => {
-    router.push('/(onboarding)/style');
-  };
-
-  const handleSkip = () => {
-    setPhoto(null, null);
-    router.push('/(onboarding)/style');
+    router.push('/(onboarding)/preview');
   };
 
   const handleBack = () => {
@@ -33,16 +28,16 @@ export default function PhotoScreen() {
         <View style={styles.container}>
           <View>
             <OnboardingHeader
-              title="Add a photo people will recognize."
-              subtitle="A profile photo makes your Veya easier to recognize when connecting for the first time."
-              currentStep={3}
+              title="Choose your card style."
+              subtitle="Pick a visual background style for your card. You can customize colors and styles anytime."
+              currentStep={4}
               totalSteps={5}
               onBack={handleBack}
             />
 
-            <ProfilePhotoPicker
-              photoUri={photoUri}
-              onPhotoSelected={setPhoto}
+            <CardStyleSelector
+              selectedStyle={backgroundStyle}
+              onSelectStyle={setBackgroundStyle}
             />
           </View>
 
@@ -52,18 +47,6 @@ export default function PhotoScreen() {
               onPress={handleContinue}
               style={styles.primaryButton}
             />
-
-            {!photoUri && (
-              <TouchableOpacity
-                onPress={handleSkip}
-                style={styles.skipButton}
-                accessibilityRole="button"
-                accessibilityLabel="Skip adding photo"
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text style={styles.skipText}>Skip for now</Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       </ScrollView>
@@ -91,20 +74,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     width: '100%',
-    paddingTop: 24,
+    paddingTop: 16,
   },
   primaryButton: {
     backgroundColor: '#111111',
-  },
-  skipButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    marginTop: 8,
-  },
-  skipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B6B6B',
   },
 });

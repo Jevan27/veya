@@ -81,6 +81,8 @@ export const CardsTab: React.FC<CardsTabProps> = ({
       primaryColor: '#111111',
       cardBackgroundColor: '#FFFFFF',
       fontFamily: 'inter',
+      backgroundStyle: 'minimal',
+      socialLinks: [],
     };
   }, [user]);
 
@@ -167,6 +169,8 @@ export const CardsTab: React.FC<CardsTabProps> = ({
               primaryColor={cardData.primaryColor}
               cardBackgroundColor={cardData.cardBackgroundColor}
               fontFamily={cardData.fontFamily}
+              backgroundStyle={cardData.backgroundStyle}
+              socialLinks={cardData.socialLinks}
               onEdit={handleOpenEdit}
             />
           )}

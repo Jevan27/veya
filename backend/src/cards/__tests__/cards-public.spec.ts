@@ -31,6 +31,8 @@ describe('Public Cards Architecture & Security Boundaries', () => {
     primaryColor: '#4F46E5',
     cardBackgroundColor: '#0F172A',
     fontFamily: 'playfair',
+    backgroundStyle: 'glass',
+    socialLinks: [],
     isDefault: true,
     isPublished: true,
     slug: 'jevan-veya',
@@ -74,6 +76,7 @@ describe('Public Cards Architecture & Security Boundaries', () => {
       expect(publicDto.phoneNumber).toBe('+63 927 278 6783');
       expect(publicDto.fontFamily).toBe('playfair');
       expect(publicDto.isPublished).toBe(true);
+      expect(publicDto.backgroundStyle).toBe('glass');
 
       // Verify security isolation: userId MUST NOT be present on public DTO
       expect((publicDto as unknown as Record<string, unknown>).userId).toBeUndefined();

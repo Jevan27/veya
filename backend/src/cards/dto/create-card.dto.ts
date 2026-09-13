@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SocialLinkDto, CardBackgroundStyle } from '@veya/shared';
 
 export class CreateCardDto {
   @ApiProperty({ description: 'Full name on the business card' })
@@ -66,6 +67,15 @@ export class CreateCardDto {
   @IsString()
   fontFamily?: string;
 
+  @ApiPropertyOptional({
+    description: 'Visual background composition style',
+    enum: ['minimal', 'flow', 'glass', 'geometric', 'organic', 'dot-fade'],
+    default: 'minimal',
+  })
+  @IsOptional()
+  @IsIn(['minimal', 'flow', 'glass', 'geometric', 'organic', 'dot-fade'])
+  backgroundStyle?: CardBackgroundStyle;
+
   @ApiPropertyOptional({ description: 'Whether this card is the default/primary card' })
   @IsOptional()
   @IsBoolean()
@@ -80,4 +90,21 @@ export class CreateCardDto {
   @IsOptional()
   @IsString()
   slug?: string;
+
+  @ApiPropertyOptional({
+    description: 'Social profile and website links',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        id: { type: 'string' },
+        platform: { type: 'string' },
+        url: { type: 'string' },
+        label: { type: 'string' },
+        displayOrder: { type: 'number' },
+      },
+    },
+  })
+  @IsOptional()
+  socialLinks?: SocialLinkDto[] | null;
 }

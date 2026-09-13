@@ -42,6 +42,5 @@ export const BACKGROUND_COLORS: BackgroundColorPreset[] = [
   { name: 'Warm Cream', hex: '#FAF8F5', isDark: false },
   { name: 'Obsidian Black', hex: '#0F172A', isDark: true },
   { name: 'Midnight Navy', hex: '#0B132B', isDark: true },
-  { name: 'Deep Indigo', hex: '#1E1B4B', isDark: true },
   { name: 'Pure Black', hex: '#000000', isDark: true },
 ];
